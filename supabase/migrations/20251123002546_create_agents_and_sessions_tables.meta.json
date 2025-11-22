@@ -1,0 +1,18 @@
+{
+  "migration_name": "20251123002546_create_agents_and_sessions_tables",
+  "created_at": "2025-11-23T00:25:46Z",
+  "description": "Create core tables for AgentForms: agents, visitors, sessions, messages, and field_values",
+  "tables_created": [
+    "agents",
+    "visitors",
+    "sessions",
+    "messages",
+    "field_values"
+  ],
+  "tables_modified": [],
+  "tables_deleted": [],
+  "breaking_changes": false,
+  "rollback_sql": "DROP TABLE IF EXISTS field_values CASCADE; DROP TABLE IF EXISTS messages CASCADE; DROP TABLE IF EXISTS sessions CASCADE; DROP TABLE IF EXISTS visitors CASCADE; DROP TABLE IF EXISTS agents CASCADE;",
+  "estimated_rows": 0,
+  "requires_downtime": false
+}

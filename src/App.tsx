@@ -15,6 +15,7 @@ import AboutHelp from "@/pages/AboutHelp"
 import PrivacyTerms from "@/pages/PrivacyTerms"
 import NotFound from "@/pages/NotFound"
 import ServerError from "@/pages/ServerError"
+import PublicAgentChat from "@/pages/PublicAgentChat"
 
 // React Query client with optimal defaults
 const queryClient = new QueryClient({
@@ -37,6 +38,10 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          
+          {/* Public agent chat routes */}
+          <Route path="/a/:agentSlug" element={<PublicAgentChat />} />
+          <Route path="/chat/:agentSlug" element={<PublicAgentChat />} />
 
           {/* Dashboard routes */}
           <Route
