@@ -12,6 +12,9 @@ export interface User {
 export interface UpdateUserInput {
   full_name?: string;
   avatar_url?: string;
+  company?: string;
+  timezone?: string;
+  language?: string;
 }
 
 export interface SignInInput {

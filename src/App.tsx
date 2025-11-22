@@ -22,6 +22,7 @@ import PublicAgentChat from "@/pages/PublicAgentChat"
 import Checkout from "@/pages/Checkout"
 import CheckoutSuccess from "@/pages/CheckoutSuccess"
 import EmailVerification from "@/pages/EmailVerification"
+import UserProfile from "@/pages/UserProfile"
 
 // React Query client with optimal defaults
 const queryClient = new QueryClient({
@@ -114,6 +115,14 @@ function App() {
             element={
               <DashboardLayout>
                 <AboutHelp />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/dashboard/profile"
+            element={
+              <DashboardLayout>
+                <UserProfile />
               </DashboardLayout>
             }
           />

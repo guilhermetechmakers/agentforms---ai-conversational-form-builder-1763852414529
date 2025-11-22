@@ -1,0 +1,12 @@
+{
+  "migration_name": "20251123005304_create_user_profiles_and_sessions_tables",
+  "created_at": "2025-11-23T00:53:04Z",
+  "description": "Create user_profiles and user_sessions tables for profile management, 2FA, and session tracking",
+  "tables_created": ["user_profiles", "user_sessions"],
+  "tables_modified": [],
+  "tables_deleted": [],
+  "breaking_changes": false,
+  "rollback_sql": "DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users; DROP FUNCTION IF EXISTS create_user_profile(); DROP TABLE IF EXISTS user_sessions CASCADE; DROP TABLE IF EXISTS user_profiles CASCADE;",
+  "estimated_rows": 0,
+  "requires_downtime": false
+}
