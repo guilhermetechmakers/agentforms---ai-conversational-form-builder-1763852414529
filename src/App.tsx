@@ -1,34 +1,96 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { Toaster } from "@/components/ui/toaster"
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
+
+// Pages
+import Landing from "@/pages/Landing"
+import Login from "@/pages/Login"
+import Signup from "@/pages/Signup"
+import Dashboard from "@/pages/Dashboard"
+import AgentBuilder from "@/pages/AgentBuilder"
+import SessionsList from "@/pages/SessionsList"
+import SessionInspector from "@/pages/SessionInspector"
+import NotFound from "@/pages/NotFound"
+
+// React Query client with optimal defaults
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+
+          {/* Dashboard routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <DashboardLayout>
+                <Dashboard />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/dashboard/agents"
+            element={
+              <DashboardLayout>
+                <Dashboard />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/dashboard/agents/new"
+            element={
+              <DashboardLayout>
+                <AgentBuilder />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/dashboard/agents/:id"
+            element={
+              <DashboardLayout>
+                <AgentBuilder />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/dashboard/sessions"
+            element={
+              <DashboardLayout>
+                <SessionsList />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/dashboard/sessions/:id"
+            element={
+              <DashboardLayout>
+                <SessionInspector />
+              </DashboardLayout>
+            }
+          />
+
+          {/* 404 */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster />
+      </BrowserRouter>
+    </QueryClientProvider>
   )
 }
 

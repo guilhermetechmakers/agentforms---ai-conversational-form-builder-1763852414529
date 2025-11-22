@@ -1,68 +1,136 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+/* Import Inter font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
+/* Design System with CSS Custom Properties */
+/* Colors from design_rules.md - converted to RGB format */
+@layer base {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    /* Primary background: #22242A */
+    --background: 34 36 42;
+    
+    /* Secondary backgrounds: #282A30, #24262C */
+    --card: 40 42 48;
+    --card-secondary: 36 38 44;
+    
+    /* Text colors */
+    --foreground: 243 244 246; /* #F3F4F6 - primary text */
+    --muted-foreground: 161 161 170; /* #A1A1AA - secondary text */
+    --disabled-foreground: 107 114 128; /* #6B7280 - disabled text */
+    
+    /* Accent colors */
+    --accent-yellow: 246 211 101; /* #F6D365 */
+    --accent-green: 74 222 128; /* #4ADE80 */
+    --accent-blue: 96 165 250; /* #60A5FA */
+    --accent-pink: 244 114 182; /* #F472B6 */
+    
+    /* Status colors */
+    --status-high: 248 113 113; /* #F87171 */
+    --status-medium: 251 191 36; /* #FBBF24 */
+    --status-low: 110 231 183; /* #6EE7B7 */
+    
+    /* Borders and separators */
+    --border: 48 49 54; /* #303136 */
+    
+    /* Primary/Secondary for buttons and UI elements */
+    --primary: 246 211 101; /* Yellow accent for primary actions */
+    --primary-foreground: 34 36 42; /* Dark text on yellow */
+    
+    --secondary: 161 161 170; /* Muted gray for secondary actions */
+    --secondary-foreground: 243 244 246; /* Light text on gray */
+    
+    /* Input and form elements */
+    --input: 48 49 54; /* Border color for inputs */
+    --ring: 96 165 250; /* Focus ring - blue */
+    
+    /* Radius */
+    --radius: 0.75rem; /* 12px rounded corners */
   }
-  a:hover {
-    color: #747bff;
+}
+
+@layer base {
+  * {
+    @apply border-border;
   }
-  button {
-    background-color: #f9f9f9;
+  
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
   }
+  
+  /* Typography hierarchy */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  
+  h1 {
+    @apply text-4xl;
+  }
+  
+  h2 {
+    @apply text-3xl;
+  }
+  
+  h3 {
+    @apply text-2xl;
+  }
+  
+  h4 {
+    @apply text-xl;
+  }
+}
+
+@layer components {
+  /* Card hover effects */
+  .card-hover {
+    @apply transition-all duration-200 hover:scale-[1.02] hover:shadow-lg;
+  }
+  
+  /* Button hover effects */
+  .btn-hover {
+    @apply transition-all duration-200 hover:scale-[1.02] active:scale-[0.98];
+  }
+  
+  /* Focus visible for accessibility */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+}
+
+/* Smooth Scrolling */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--border));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--muted-foreground));
+}
+
+/* Focus Visible for Accessibility */
+:focus-visible {
+  outline: 2px solid rgb(var(--ring));
+  outline-offset: 2px;
 }
