@@ -1,0 +1,12 @@
+{
+  "migration_name": "20251123003136_create_billing_tables",
+  "created_at": "2025-11-23T00:31:36Z",
+  "description": "Create billing and subscription management tables (plans, subscriptions, transactions, coupons, coupon_usage)",
+  "tables_created": ["plans", "subscriptions", "transactions", "coupons", "coupon_usage"],
+  "tables_modified": [],
+  "tables_deleted": [],
+  "breaking_changes": false,
+  "rollback_sql": "DROP TABLE IF EXISTS coupon_usage CASCADE; DROP TABLE IF EXISTS coupons CASCADE; DROP TABLE IF EXISTS transactions CASCADE; DROP TABLE IF EXISTS subscriptions CASCADE; DROP TABLE IF EXISTS plans CASCADE;",
+  "estimated_rows": 0,
+  "requires_downtime": false
+}

@@ -16,6 +16,8 @@ import PrivacyTerms from "@/pages/PrivacyTerms"
 import NotFound from "@/pages/NotFound"
 import ServerError from "@/pages/ServerError"
 import PublicAgentChat from "@/pages/PublicAgentChat"
+import Checkout from "@/pages/Checkout"
+import CheckoutSuccess from "@/pages/CheckoutSuccess"
 
 // React Query client with optimal defaults
 const queryClient = new QueryClient({
@@ -108,6 +110,10 @@ function App() {
               </DashboardLayout>
             }
           />
+
+          {/* Billing routes */}
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/checkout/success" element={<CheckoutSuccess />} />
 
           {/* Legal pages */}
           <Route path="/privacy" element={<PrivacyTerms />} />
