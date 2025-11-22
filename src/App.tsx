@@ -11,6 +11,7 @@ import Dashboard from "@/pages/Dashboard"
 import AgentBuilder from "@/pages/AgentBuilder"
 import SessionsList from "@/pages/SessionsList"
 import SessionInspector from "@/pages/SessionInspector"
+import AboutHelp from "@/pages/AboutHelp"
 import NotFound from "@/pages/NotFound"
 
 // React Query client with optimal defaults
@@ -81,6 +82,22 @@ function App() {
             element={
               <DashboardLayout>
                 <SessionInspector />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/dashboard/help"
+            element={
+              <DashboardLayout>
+                <AboutHelp />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/help"
+            element={
+              <DashboardLayout>
+                <AboutHelp />
               </DashboardLayout>
             }
           />

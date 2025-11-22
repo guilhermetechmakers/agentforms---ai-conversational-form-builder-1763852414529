@@ -18,6 +18,7 @@ const navigation = [
   { name: "Sessions", href: "/dashboard/sessions", icon: FileText },
   { name: "Webhooks", href: "/dashboard/webhooks", icon: Webhook },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
+  { name: "Help", href: "/dashboard/help", icon: HelpCircle },
 ]
 
 
@@ -83,19 +84,6 @@ export function Sidebar({ onCollapseChange }: SidebarProps) {
           })}
         </nav>
 
-        {/* Footer */}
-        <div className="border-t border-[#303136] p-4">
-          <Link
-            to="/help"
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-[#A1A1AA] hover:bg-[#282A30] hover:text-[#F3F4F6] transition-colors",
-              collapsed && "justify-center"
-            )}
-          >
-            <HelpCircle className="h-5 w-5 flex-shrink-0" />
-            {!collapsed && <span>Help</span>}
-          </Link>
-        </div>
       </div>
     </div>
   )
