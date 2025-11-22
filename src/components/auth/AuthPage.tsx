@@ -129,8 +129,8 @@ export function AuthPage({ defaultTab = "login" }: AuthPageProps) {
           description: "Please check your email to verify your account.",
         })
         
-        // Redirect to email verification page or dashboard
-        navigate("/dashboard")
+        // Redirect to email verification page
+        navigate("/verify-email")
       }
     } catch (error: any) {
       toast.error("Signup failed", {

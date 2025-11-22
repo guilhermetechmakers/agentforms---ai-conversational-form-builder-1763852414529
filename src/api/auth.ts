@@ -21,7 +21,7 @@ export const authApi = {
           full_name: credentials.full_name,
           company: credentials.company || null,
         },
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${window.location.origin}/verify-email`,
       },
     })
 
@@ -56,5 +56,35 @@ export const authApi = {
       },
     })
     if (error) throw error
+  },
+
+  resendVerificationEmail: async (email?: string): Promise<void> => {
+    const { data: { user } } = await supabase.auth.getUser()
+    const emailToUse = email || user?.email
+
+    if (!emailToUse) {
+      throw new Error("No email address found. Please provide an email address.")
+    }
+
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: emailToUse,
+      options: {
+        emailRedirectTo: `${window.location.origin}/verify-email`,
+      },
+    })
+
+    if (error) throw error
+  },
+
+  checkVerificationStatus: async () => {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    if (error) throw error
+
+    return {
+      isVerified: !!user?.email_confirmed_at,
+      email: user?.email || null,
+      user,
+    }
   },
 }

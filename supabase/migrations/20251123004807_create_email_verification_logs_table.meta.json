@@ -1,0 +1,12 @@
+{
+  "migration_name": "20251123004807_create_email_verification_logs_table",
+  "created_at": "2025-11-23T00:48:07Z",
+  "description": "Create email_verification_logs table to track email verification attempts, resends, and outcomes for audit and analytics purposes",
+  "tables_created": ["email_verification_logs"],
+  "tables_modified": [],
+  "tables_deleted": [],
+  "breaking_changes": false,
+  "rollback_sql": "DROP TABLE IF EXISTS email_verification_logs CASCADE;",
+  "estimated_rows": 0,
+  "requires_downtime": false
+}

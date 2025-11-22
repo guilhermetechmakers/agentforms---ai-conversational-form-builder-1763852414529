@@ -21,6 +21,7 @@ import ServerError from "@/pages/ServerError"
 import PublicAgentChat from "@/pages/PublicAgentChat"
 import Checkout from "@/pages/Checkout"
 import CheckoutSuccess from "@/pages/CheckoutSuccess"
+import EmailVerification from "@/pages/EmailVerification"
 
 // React Query client with optimal defaults
 const queryClient = new QueryClient({
@@ -45,6 +46,7 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<EmailVerification />} />
           
           {/* Public agent chat routes */}
           <Route path="/a/:agentSlug" element={<PublicAgentChat />} />
