@@ -1,12 +1,15 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Toaster } from "@/components/ui/toaster"
+import { Toaster as SonnerToaster } from "sonner"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 
 // Pages
 import Landing from "@/pages/Landing"
 import Login from "@/pages/Login"
 import Signup from "@/pages/Signup"
+import ForgotPassword from "@/pages/ForgotPassword"
+import ResetPassword from "@/pages/ResetPassword"
 import Dashboard from "@/pages/Dashboard"
 import AgentBuilder from "@/pages/AgentBuilder"
 import SessionsList from "@/pages/SessionsList"
@@ -40,6 +43,8 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           
           {/* Public agent chat routes */}
           <Route path="/a/:agentSlug" element={<PublicAgentChat />} />
@@ -127,6 +132,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Toaster />
+        <SonnerToaster position="top-center" richColors />
       </BrowserRouter>
     </QueryClientProvider>
   )

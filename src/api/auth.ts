@@ -1,29 +1,60 @@
-import { api } from "@/lib/api"
-import type { AuthResponse, SignInInput, SignUpInput } from "@/types/user"
+import { supabase } from "@/lib/supabase"
+import type { SignInInput, SignUpInput } from "@/types/user"
 
 export const authApi = {
-  signIn: async (credentials: SignInInput): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>("/auth/login", credentials)
-    if (response.token) {
-      localStorage.setItem("auth_token", response.token)
-    }
-    return response
+  signIn: async (credentials: SignInInput) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: credentials.email,
+      password: credentials.password,
+    })
+
+    if (error) throw error
+    return data
   },
 
-  signUp: async (credentials: SignUpInput): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>("/auth/register", credentials)
-    if (response.token) {
-      localStorage.setItem("auth_token", response.token)
-    }
-    return response
+  signUp: async (credentials: SignUpInput) => {
+    const { data, error } = await supabase.auth.signUp({
+      email: credentials.email,
+      password: credentials.password,
+      options: {
+        data: {
+          full_name: credentials.full_name,
+          company: credentials.company || null,
+        },
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+      },
+    })
+
+    if (error) throw error
+    return data
   },
 
   signOut: async (): Promise<void> => {
-    await api.post("/auth/logout", {})
-    localStorage.removeItem("auth_token")
+    const { error } = await supabase.auth.signOut()
+    if (error) throw error
   },
 
   resetPassword: async (email: string): Promise<void> => {
-    await api.post("/auth/forgot-password", { email })
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    if (error) throw error
+  },
+
+  updatePassword: async (newPassword: string): Promise<void> => {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    })
+    if (error) throw error
+  },
+
+  signInWithOAuth: async (provider: "google" | "github" | "azure") => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
+    })
+    if (error) throw error
   },
 }
