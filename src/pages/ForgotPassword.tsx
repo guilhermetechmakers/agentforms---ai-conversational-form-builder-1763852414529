@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { authApi } from "@/api/auth"
-import { Mail, Loader2, ArrowLeft, CheckCircle2 } from "lucide-react"
+import { Mail, Loader2, ArrowLeft, CheckCircle2, Info } from "lucide-react"
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -55,7 +55,7 @@ export default function ForgotPassword() {
         <Card className="w-full max-w-md animate-fade-in-up border-border shadow-card">
           <CardHeader className="space-y-1 text-center">
             <div className="flex justify-center mb-4">
-              <div className="rounded-full bg-green/20 p-3">
+              <div className="rounded-full bg-green/20 p-3 animate-scale-in">
                 <CheckCircle2 className="h-8 w-8 text-green" />
               </div>
             </div>
@@ -65,25 +65,35 @@ export default function ForgotPassword() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground text-center">
-              Click the link in the email to reset your password. The link will expire in 1 hour.
+            <div className="rounded-lg bg-blue/10 border border-blue/20 p-4">
+              <div className="flex gap-3">
+                <Info className="h-5 w-5 text-blue flex-shrink-0 mt-0.5" />
+                <div className="space-y-1 text-sm">
+                  <p className="font-medium text-foreground">Next steps:</p>
+                  <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                    <li>Check your inbox for the reset email</li>
+                    <li>Click the link in the email (expires in 1 hour)</li>
+                    <li>Set your new password</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              Didn't receive the email? Check your spam folder or{" "}
+              <button
+                onClick={() => setEmailSent(false)}
+                className="text-blue hover:underline font-medium"
+              >
+                try again
+              </button>
             </p>
-            <div className="pt-4 space-y-2">
+            <div className="pt-2 space-y-2">
               <Button asChild variant="outline" className="w-full">
                 <Link to="/login" className="flex items-center justify-center gap-2">
                   <ArrowLeft className="h-4 w-4" />
                   Back to Login
                 </Link>
               </Button>
-              <p className="text-xs text-center text-muted-foreground">
-                Didn't receive the email?{" "}
-                <button
-                  onClick={() => setEmailSent(false)}
-                  className="text-blue hover:underline"
-                >
-                  Try again
-                </button>
-              </p>
             </div>
           </CardContent>
         </Card>
@@ -112,13 +122,19 @@ export default function ForgotPassword() {
                   id="email"
                   type="email"
                   placeholder="you@example.com"
-                  className="pl-10"
+                  className="pl-10 focus-ring"
                   {...register("email")}
+                  autoFocus
                 />
               </div>
               {errors.email && (
-                <p className="text-sm text-status-high">{errors.email.message}</p>
+                <p className="text-sm text-status-high flex items-center gap-1">
+                  {errors.email.message}
+                </p>
               )}
+              <p className="text-xs text-muted-foreground">
+                Enter the email address associated with your account and we'll send you a link to reset your password.
+              </p>
             </div>
 
             <Button
@@ -129,10 +145,13 @@ export default function ForgotPassword() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
+                  Sending Reset Link...
                 </>
               ) : (
-                "Send Reset Link"
+                <>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Send Reset Link
+                </>
               )}
             </Button>
           </form>
