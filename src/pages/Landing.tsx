@@ -99,13 +99,16 @@ export default function Landing() {
               © 2024 AgentForms. All rights reserved.
             </p>
             <div className="flex gap-6 mt-4 md:mt-0">
-              <Link to="/privacy" className="text-[#A1A1AA] hover:text-[#F3F4F6] text-sm">
-                Privacy
+              <Link
+                to="/privacy"
+                className="text-[#A1A1AA] hover:text-[#F3F4F6] text-sm transition-colors"
+              >
+                Privacy & Terms
               </Link>
-              <Link to="/terms" className="text-[#A1A1AA] hover:text-[#F3F4F6] text-sm">
-                Terms
-              </Link>
-              <Link to="/help" className="text-[#A1A1AA] hover:text-[#F3F4F6] text-sm">
+              <Link
+                to="/help"
+                className="text-[#A1A1AA] hover:text-[#F3F4F6] text-sm transition-colors"
+              >
                 Help
               </Link>
             </div>

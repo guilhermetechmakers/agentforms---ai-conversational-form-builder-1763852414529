@@ -1,0 +1,12 @@
+{
+  "migration_name": "20251123001404_create_legal_documents_table",
+  "created_at": "2025-11-23T00:14:04Z",
+  "description": "Create tables for legal documents (Privacy Policy, Terms of Service, Cookie Policy) and legal requests from users",
+  "tables_created": ["legal_documents", "legal_requests"],
+  "tables_modified": [],
+  "tables_deleted": [],
+  "breaking_changes": false,
+  "rollback_sql": "DROP TABLE IF EXISTS legal_requests CASCADE; DROP TABLE IF EXISTS legal_documents CASCADE;",
+  "estimated_rows": 0,
+  "requires_downtime": false
+}

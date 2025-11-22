@@ -12,6 +12,7 @@ import AgentBuilder from "@/pages/AgentBuilder"
 import SessionsList from "@/pages/SessionsList"
 import SessionInspector from "@/pages/SessionInspector"
 import AboutHelp from "@/pages/AboutHelp"
+import PrivacyTerms from "@/pages/PrivacyTerms"
 import NotFound from "@/pages/NotFound"
 
 // React Query client with optimal defaults
@@ -101,6 +102,10 @@ function App() {
               </DashboardLayout>
             }
           />
+
+          {/* Legal pages */}
+          <Route path="/privacy" element={<PrivacyTerms />} />
+          <Route path="/terms" element={<PrivacyTerms />} />
 
           {/* 404 */}
           <Route path="*" element={<NotFound />} />
