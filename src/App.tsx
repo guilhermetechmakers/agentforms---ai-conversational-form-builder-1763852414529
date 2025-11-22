@@ -14,6 +14,7 @@ import SessionInspector from "@/pages/SessionInspector"
 import AboutHelp from "@/pages/AboutHelp"
 import PrivacyTerms from "@/pages/PrivacyTerms"
 import NotFound from "@/pages/NotFound"
+import ServerError from "@/pages/ServerError"
 
 // React Query client with optimal defaults
 const queryClient = new QueryClient({
@@ -106,6 +107,10 @@ function App() {
           {/* Legal pages */}
           <Route path="/privacy" element={<PrivacyTerms />} />
           <Route path="/terms" element={<PrivacyTerms />} />
+
+          {/* Error pages */}
+          <Route path="/500" element={<ServerError />} />
+          <Route path="/error" element={<ServerError />} />
 
           {/* 404 */}
           <Route path="*" element={<NotFound />} />
