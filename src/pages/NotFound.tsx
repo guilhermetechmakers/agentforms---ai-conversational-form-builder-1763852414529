@@ -16,7 +16,7 @@ import { useAgents } from "@/hooks/useAgents"
 import { helpApi } from "@/api/help"
 import { useQuery } from "@tanstack/react-query"
 import { Home, Search, HelpCircle, FileText, MessageSquare, ArrowRight, X } from "lucide-react"
-import type { Agent } from "@/types/agent"
+import type { AgentWithStats } from "@/types/usage"
 import type { Documentation } from "@/types/help"
 
 interface SearchResult {
@@ -33,7 +33,8 @@ export default function NotFound() {
   const [isSupportDialogOpen, setIsSupportDialogOpen] = useState(false)
 
   // Fetch agents
-  const { data: agents = [], isLoading: agentsLoading } = useAgents()
+  const { data: agentsData, isLoading: agentsLoading } = useAgents()
+  const agents: AgentWithStats[] = agentsData?.agents || []
 
   // Search documentation
   const { data: documentation = [], isLoading: docsLoading } = useQuery({
@@ -51,7 +52,7 @@ export default function NotFound() {
     const results: SearchResult[] = []
 
     // Search agents
-    agents.forEach((agent: Agent) => {
+    agents.forEach((agent) => {
       if (
         agent.name.toLowerCase().includes(query) ||
         agent.description?.toLowerCase().includes(query)
