@@ -1,0 +1,12 @@
+{
+  "migration_name": "20251123021148_create_llm_orchestration_tables",
+  "created_at": "2025-11-23T02:11:48Z",
+  "description": "Create tables for LLM orchestration: prompts, responses, and usage_logs",
+  "tables_created": ["prompts", "responses", "usage_logs"],
+  "tables_modified": [],
+  "tables_deleted": [],
+  "breaking_changes": false,
+  "rollback_sql": "DROP TABLE IF EXISTS usage_logs CASCADE; DROP TABLE IF EXISTS responses CASCADE; DROP TABLE IF EXISTS prompts CASCADE;",
+  "estimated_rows": 0,
+  "requires_downtime": false
+}

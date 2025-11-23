@@ -27,6 +27,7 @@ import UserProfile from "@/pages/UserProfile"
 import AdminDashboard from "@/pages/AdminDashboard"
 import Webhooks from "@/pages/Webhooks"
 import Settings from "@/pages/Settings"
+import { LLMOrchestration } from "@/pages/LLMOrchestration"
 
 // React Query client with optimal defaults
 const queryClient = new QueryClient({
@@ -159,6 +160,14 @@ function App() {
             element={
               <DashboardLayout>
                 <Settings />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/dashboard/llm-orchestration"
+            element={
+              <DashboardLayout>
+                <LLMOrchestration />
               </DashboardLayout>
             }
           />
