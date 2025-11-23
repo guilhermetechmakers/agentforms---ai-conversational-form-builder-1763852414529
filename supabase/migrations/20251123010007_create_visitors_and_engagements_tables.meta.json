@@ -1,0 +1,12 @@
+{
+  "migration_name": "20251123010007_create_visitors_and_engagements_tables",
+  "created_at": "2025-11-23T01:00:07Z",
+  "description": "Create tables for tracking landing page visitors and their engagement events",
+  "tables_created": ["visitors", "engagements"],
+  "tables_modified": [],
+  "tables_deleted": [],
+  "breaking_changes": false,
+  "rollback_sql": "DROP TABLE IF EXISTS engagements CASCADE; DROP TABLE IF EXISTS visitors CASCADE;",
+  "estimated_rows": 0,
+  "requires_downtime": false
+}
