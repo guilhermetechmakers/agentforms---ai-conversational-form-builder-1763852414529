@@ -30,6 +30,7 @@ import Settings from "@/pages/Settings"
 import SecurityCompliance from "@/pages/SecurityCompliance"
 import { LLMOrchestration } from "@/pages/LLMOrchestration"
 import Billing from "@/pages/Billing"
+import Exports from "@/pages/Exports"
 
 // React Query client with optimal defaults
 const queryClient = new QueryClient({
@@ -186,6 +187,14 @@ function App() {
             element={
               <DashboardLayout>
                 <LLMOrchestration />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/dashboard/exports"
+            element={
+              <DashboardLayout>
+                <Exports />
               </DashboardLayout>
             }
           />

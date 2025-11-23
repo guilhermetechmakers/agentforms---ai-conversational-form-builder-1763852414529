@@ -1,0 +1,12 @@
+{
+  "migration_name": "20251123025000_create_exports_and_schedules_tables",
+  "created_at": "2025-11-23T02:50:00Z",
+  "description": "Create exports and export_schedules tables for on-demand and scheduled data exports",
+  "tables_created": ["exports", "export_schedules"],
+  "tables_modified": [],
+  "tables_deleted": [],
+  "breaking_changes": false,
+  "rollback_sql": "DROP TABLE IF EXISTS export_schedules CASCADE; DROP TABLE IF EXISTS exports CASCADE;",
+  "estimated_rows": 0,
+  "requires_downtime": false
+}
