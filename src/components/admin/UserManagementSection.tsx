@@ -37,6 +37,7 @@ import { useUsers, useUserAction } from "@/hooks/useAdmin"
 import { formatDistanceToNow } from "date-fns"
 import { Skeleton } from "@/components/ui/skeleton"
 import { UserActionDialog } from "./UserActionDialog"
+import { UserDetailModal } from "./UserDetailModal"
 import type { UserManagementUser } from "@/types/admin"
 
 export function UserManagementSection() {
@@ -47,6 +48,8 @@ export function UserManagementSection() {
   const [selectedUser, setSelectedUser] = useState<UserManagementUser | null>(null)
   const [actionDialogOpen, setActionDialogOpen] = useState(false)
   const [actionType, setActionType] = useState<"suspend" | "delete" | "restore" | null>(null)
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
 
   const pageSize = 20
 
@@ -256,7 +259,8 @@ export function UserManagementSection() {
                               <DropdownMenuItem
                                 className="text-[#F3F4F6] focus:bg-[#24262C]"
                                 onClick={() => {
-                                  // View user details
+                                  setSelectedUserId(user.id)
+                                  setDetailModalOpen(true)
                                 }}
                               >
                                 <Eye className="mr-2 h-4 w-4" />
@@ -339,6 +343,20 @@ export function UserManagementSection() {
           user={selectedUser}
           action={actionType}
           onConfirm={confirmAction}
+        />
+      )}
+
+      {/* User Detail Modal */}
+      {selectedUserId && (
+        <UserDetailModal
+          open={detailModalOpen}
+          onOpenChange={(open) => {
+            setDetailModalOpen(open)
+            if (!open) {
+              setSelectedUserId(null)
+            }
+          }}
+          userId={selectedUserId}
         />
       )}
     </div>

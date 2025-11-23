@@ -33,10 +33,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { ModerationReportReviewDialog } from "./ModerationReportReviewDialog"
 
 export function ModerationQueueSection() {
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "reviewing" | "resolved" | "dismissed">("pending")
   const [currentPage, setCurrentPage] = useState(1)
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null)
   const pageSize = 20
 
   const { data: moderationData, isLoading } = useModerationQueue({
@@ -216,7 +219,8 @@ export function ModerationQueueSection() {
                               <DropdownMenuItem
                                 className="text-[#F3F4F6] focus:bg-[#24262C]"
                                 onClick={() => {
-                                  // View details
+                                  setSelectedReportId(item.id)
+                                  setReviewDialogOpen(true)
                                 }}
                               >
                                 <Eye className="mr-2 h-4 w-4" />
@@ -283,6 +287,20 @@ export function ModerationQueueSection() {
           )}
         </CardContent>
       </Card>
+
+      {/* Moderation Report Review Dialog */}
+      {selectedReportId && (
+        <ModerationReportReviewDialog
+          open={reviewDialogOpen}
+          onOpenChange={(open) => {
+            setReviewDialogOpen(open)
+            if (!open) {
+              setSelectedReportId(null)
+            }
+          }}
+          reportId={selectedReportId}
+        />
+      )}
     </div>
   )
 }
