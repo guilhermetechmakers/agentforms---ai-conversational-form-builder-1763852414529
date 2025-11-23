@@ -12,6 +12,7 @@ import ForgotPassword from "@/pages/ForgotPassword"
 import ResetPassword from "@/pages/ResetPassword"
 import Dashboard from "@/pages/Dashboard"
 import AgentBuilder from "@/pages/AgentBuilder"
+import AgentSandbox from "@/pages/AgentSandbox"
 import SessionsList from "@/pages/SessionsList"
 import SessionInspector from "@/pages/SessionInspector"
 import AboutHelp from "@/pages/AboutHelp"
@@ -84,6 +85,14 @@ function App() {
             element={
               <DashboardLayout>
                 <AgentBuilder />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/dashboard/agents/:id/sandbox"
+            element={
+              <DashboardLayout>
+                <AgentSandbox />
               </DashboardLayout>
             }
           />
