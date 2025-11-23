@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useAgentBySlug, useCreateSession, useSession, useSendMessage, useCreateVisitor } from "@/hooks/usePublicChat"
+import { useRealtimeChat } from "@/hooks/useRealtimeChat"
 import { WelcomeBanner } from "@/components/chat/WelcomeBanner"
 import { ChatWindow } from "@/components/chat/ChatWindow"
 import { MessageInput } from "@/components/chat/MessageInput"
@@ -10,6 +11,7 @@ import { SessionEndScreen } from "@/components/chat/SessionEndScreen"
 import { ConsentForm } from "@/components/chat/ConsentForm"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import type { Message } from "@/types/session"
 
 export default function PublicAgentChat() {
   const { agentSlug } = useParams<{ agentSlug: string }>()
@@ -70,6 +72,30 @@ export default function PublicAgentChat() {
     data: sessionData,
   } = useSession(sessionId || "", !!sessionId)
 
+  // Handle new agent messages (hide typing indicator)
+  const handleNewAgentMessage = useCallback((message: Message) => {
+    // Only hide typing indicator if it's an agent message
+    if (message.role === "agent") {
+      setIsTyping(false)
+    }
+  }, [])
+
+  // Handle session status updates
+  const handleSessionUpdate = useCallback((status: string) => {
+    if (status === "completed") {
+      setIsTyping(false)
+      toast.success("Session completed!")
+    }
+  }, [])
+
+  // Enable real-time updates for the session
+  useRealtimeChat(
+    sessionId,
+    !!sessionId,
+    handleNewAgentMessage,
+    handleSessionUpdate
+  )
+
   // Check if consent is required
   const consentRequired = agent?.visuals?.welcome_message?.includes("consent") || false
 
@@ -109,7 +135,7 @@ export default function PublicAgentChat() {
 
   // Handle sending message
   const handleSendMessage = useCallback(
-    async (content: string) => {
+    async (content: string, attachment?: { url: string; type: string }) => {
       if (!sessionId) {
         toast.error("Session not initialized")
         return
@@ -120,9 +146,12 @@ export default function PublicAgentChat() {
         await sendMessageMutation.mutateAsync({
           session_id: sessionId,
           content,
+          attachment_url: attachment?.url,
+          attachment_type: attachment?.type,
         })
-        // Simulate typing delay for agent response
-        setTimeout(() => setIsTyping(false), 1000)
+        // The real-time hook will handle the agent response
+        // Set a timeout to hide typing indicator if no response comes
+        setTimeout(() => setIsTyping(false), 5000)
       } catch (error) {
         setIsTyping(false)
         toast.error("Failed to send message. Please try again.")
@@ -249,14 +278,17 @@ export default function PublicAgentChat() {
                 agentName={agent.name}
                 agentAvatarUrl={agent.visuals?.avatar_url}
                 isTyping={isTyping}
+                fieldValues={fieldValues}
               />
               <MessageInput
                 onSend={handleSendMessage}
-                disabled={sendMessageMutation.isPending || !sessionId}
+                disabled={sendMessageMutation.isPending || !sessionId || isCompleted}
                 isLoading={sendMessageMutation.isPending}
-                placeholder="Type your message..."
+                placeholder={isCompleted ? "Session completed" : "Type your message..."}
                 quickSelects={[]} // Could be populated from agent schema
                 onQuickSelect={handleQuickSelect}
+                showAttachment={true}
+                maxLength={2000}
               />
             </div>
 

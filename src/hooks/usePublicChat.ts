@@ -68,13 +68,15 @@ export function useCreateSession() {
 
 /**
  * Get session with messages and field values
+ * Note: Real-time updates are handled by useRealtimeChat hook
  */
 export function useSession(sessionId: string, enabled = true) {
   return useQuery({
     queryKey: publicChatKeys.session(sessionId),
     queryFn: () => publicChatApi.getSession(sessionId),
     enabled: enabled && !!sessionId,
-    refetchInterval: 2000, // Poll every 2 seconds for new messages
+    staleTime: 1000 * 30, // 30 seconds - real-time updates handle freshness
+    refetchOnWindowFocus: false, // Real-time handles updates
   })
 }
 
