@@ -27,6 +27,7 @@ import UserProfile from "@/pages/UserProfile"
 import AdminDashboard from "@/pages/AdminDashboard"
 import Webhooks from "@/pages/Webhooks"
 import Settings from "@/pages/Settings"
+import SecurityCompliance from "@/pages/SecurityCompliance"
 import { LLMOrchestration } from "@/pages/LLMOrchestration"
 import Billing from "@/pages/Billing"
 
@@ -161,6 +162,14 @@ function App() {
             element={
               <DashboardLayout>
                 <Settings />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/dashboard/security"
+            element={
+              <DashboardLayout>
+                <SecurityCompliance />
               </DashboardLayout>
             }
           />

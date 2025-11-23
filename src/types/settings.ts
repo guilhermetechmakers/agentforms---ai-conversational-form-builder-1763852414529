@@ -252,3 +252,60 @@ export interface TeamMemberInvite {
   role: 'owner' | 'admin' | 'member';
   team_id?: string;
 }
+
+// Encryption Settings
+export interface EncryptionSetting {
+  id: string;
+  user_id: string;
+  encryption_at_rest_enabled: boolean;
+  encryption_at_rest_algorithm: 'AES-256-GCM' | 'AES-256-CBC' | 'ChaCha20-Poly1305';
+  encryption_at_rest_key_rotation_days: number;
+  last_key_rotation_at: string | null;
+  tls_enabled: boolean;
+  tls_min_version: 'TLSv1.0' | 'TLSv1.1' | 'TLSv1.2' | 'TLSv1.3';
+  tls_certificate_expiry_check: boolean;
+  last_tls_check_at: string | null;
+  field_level_encryption_enabled: boolean;
+  encrypted_fields: string[];
+  compliance_status: 'compliant' | 'warning' | 'non-compliant';
+  compliance_notes: string | null;
+  metadata: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EncryptionSettingInsert {
+  id?: string;
+  user_id: string;
+  encryption_at_rest_enabled?: boolean;
+  encryption_at_rest_algorithm?: 'AES-256-GCM' | 'AES-256-CBC' | 'ChaCha20-Poly1305';
+  encryption_at_rest_key_rotation_days?: number;
+  last_key_rotation_at?: string | null;
+  tls_enabled?: boolean;
+  tls_min_version?: 'TLSv1.0' | 'TLSv1.1' | 'TLSv1.2' | 'TLSv1.3';
+  tls_certificate_expiry_check?: boolean;
+  last_tls_check_at?: string | null;
+  field_level_encryption_enabled?: boolean;
+  encrypted_fields?: string[];
+  compliance_status?: 'compliant' | 'warning' | 'non-compliant';
+  compliance_notes?: string | null;
+  metadata?: Record<string, any>;
+}
+
+export interface EncryptionSettingUpdate {
+  encryption_at_rest_enabled?: boolean;
+  encryption_at_rest_algorithm?: 'AES-256-GCM' | 'AES-256-CBC' | 'ChaCha20-Poly1305';
+  encryption_at_rest_key_rotation_days?: number;
+  last_key_rotation_at?: string | null;
+  tls_enabled?: boolean;
+  tls_min_version?: 'TLSv1.0' | 'TLSv1.1' | 'TLSv1.2' | 'TLSv1.3';
+  tls_certificate_expiry_check?: boolean;
+  last_tls_check_at?: string | null;
+  field_level_encryption_enabled?: boolean;
+  encrypted_fields?: string[];
+  compliance_status?: 'compliant' | 'warning' | 'non-compliant';
+  compliance_notes?: string | null;
+  metadata?: Record<string, any>;
+}
+
+export type EncryptionSettingRow = EncryptionSetting;

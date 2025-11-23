@@ -14,6 +14,9 @@ import type {
   TeamMember,
   TeamMemberInvite,
   TeamMemberUpdate,
+  EncryptionSetting,
+  EncryptionSettingInsert,
+  EncryptionSettingUpdate,
 } from "@/types/settings"
 
 export const settingsApi = {
@@ -113,5 +116,18 @@ export const settingsApi = {
 
   removeTeamMember: async (id: string): Promise<void> => {
     await api.delete(`/settings/team-members/${id}`)
+  },
+
+  // Encryption Settings
+  getEncryptionSettings: async (): Promise<EncryptionSetting | null> => {
+    return api.get<EncryptionSetting | null>("/settings/encryption")
+  },
+
+  createEncryptionSettings: async (data: EncryptionSettingInsert): Promise<EncryptionSetting> => {
+    return api.post<EncryptionSetting>("/settings/encryption", data)
+  },
+
+  updateEncryptionSettings: async (data: EncryptionSettingUpdate): Promise<EncryptionSetting> => {
+    return api.patch<EncryptionSetting>("/settings/encryption", data)
   },
 }

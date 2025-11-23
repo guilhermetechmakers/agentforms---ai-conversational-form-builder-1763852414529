@@ -11,6 +11,8 @@ import type {
   SSOConfigurationUpdate,
   TeamMemberInvite,
   TeamMemberUpdate,
+  EncryptionSettingInsert,
+  EncryptionSettingUpdate,
 } from "@/types/settings"
 
 // LLM Provider Settings
@@ -253,6 +255,44 @@ export function useRemoveTeamMember() {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to remove team member")
+    },
+  })
+}
+
+// Encryption Settings
+export function useEncryptionSettings() {
+  return useQuery({
+    queryKey: ["encryption-settings"],
+    queryFn: () => settingsApi.getEncryptionSettings(),
+  })
+}
+
+export function useCreateEncryptionSettings() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: EncryptionSettingInsert) => settingsApi.createEncryptionSettings(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["encryption-settings"] })
+      toast.success("Encryption settings saved")
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to save encryption settings")
+    },
+  })
+}
+
+export function useUpdateEncryptionSettings() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: (data: EncryptionSettingUpdate) => settingsApi.updateEncryptionSettings(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["encryption-settings"] })
+      toast.success("Encryption settings updated")
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update encryption settings")
     },
   })
 }

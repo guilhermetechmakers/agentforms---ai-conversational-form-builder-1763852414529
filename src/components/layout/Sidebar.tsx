@@ -10,7 +10,8 @@ import {
   ChevronRight,
   HelpCircle,
   Shield,
-  CreditCard
+  CreditCard,
+  Lock
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useProfile } from "@/hooks/useProfile"
@@ -22,6 +23,7 @@ const baseNavigation = [
   { name: "Webhooks", href: "/dashboard/webhooks", icon: Webhook },
   { name: "Billing", href: "/dashboard/billing", icon: CreditCard },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
+  { name: "Security", href: "/dashboard/security", icon: Lock },
   { name: "Help", href: "/dashboard/help", icon: HelpCircle },
 ]
 
