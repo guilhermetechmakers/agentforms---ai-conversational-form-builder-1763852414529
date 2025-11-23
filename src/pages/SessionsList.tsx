@@ -37,8 +37,10 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  RotateCcw,
+  Archive,
 } from "lucide-react"
-import { useSessions, useDeleteSession, useDeleteSessions } from "@/hooks/useSessions"
+import { useSessions, useDeleteSession, useDeleteSessions, useRestoreSession } from "@/hooks/useSessions"
 import { useAgents } from "@/hooks/useAgents"
 import { SessionDetailsModal } from "@/components/sessions/SessionDetailsModal"
 import { ExportDialog } from "@/components/sessions/ExportDialog"
@@ -58,12 +60,13 @@ export default function SessionsList() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [showDeleted, setShowDeleted] = useState(false)
   const pageSize = 20
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [selectedAgentId, statusFilter, dateFrom, dateTo, searchQuery])
+  }, [selectedAgentId, statusFilter, dateFrom, dateTo, searchQuery, showDeleted])
 
   // Build filters
   const filters: SessionFilters = {
@@ -74,12 +77,14 @@ export default function SessionsList() {
     date_to: dateTo || undefined,
     page: currentPage,
     pageSize,
+    include_deleted: showDeleted,
   }
 
   const { data: sessionsData, isLoading } = useSessions(filters)
   const { data: agentsData } = useAgents({ status: "all" })
   const deleteSessionMutation = useDeleteSession()
   const deleteSessionsMutation = useDeleteSessions()
+  const restoreSessionMutation = useRestoreSession()
 
   const sessions = sessionsData?.sessions || []
   const totalPages = sessionsData?.totalPages || 1
@@ -111,7 +116,7 @@ export default function SessionsList() {
   }
 
   const handleDeleteSession = async (sessionId: string) => {
-    if (confirm("Are you sure you want to delete this session?")) {
+    if (confirm("Are you sure you want to delete this session? It can be restored later.")) {
       await deleteSessionMutation.mutateAsync(sessionId)
       setSelectedSessions(prev => {
         const newSet = new Set(prev)
@@ -121,9 +126,18 @@ export default function SessionsList() {
     }
   }
 
+  const handleRestoreSession = async (sessionId: string) => {
+    await restoreSessionMutation.mutateAsync(sessionId)
+    setSelectedSessions(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(sessionId)
+      return newSet
+    })
+  }
+
   const handleBulkDelete = async () => {
     if (selectedSessions.size === 0) return
-    if (confirm(`Are you sure you want to delete ${selectedSessions.size} session(s)?`)) {
+    if (confirm(`Are you sure you want to delete ${selectedSessions.size} session(s)? They can be restored later.`)) {
       await deleteSessionsMutation.mutateAsync(Array.from(selectedSessions))
       setSelectedSessions(new Set())
     }
@@ -264,12 +278,25 @@ export default function SessionsList() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#A1A1AA]" />
               <Input
-                placeholder="Search sessions..."
+                placeholder="Search sessions, messages, fields..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-[#24262C] border-[#303136] text-[#F3F4F6]"
               />
             </div>
+          </div>
+          {/* Show Deleted Toggle */}
+          <div className="mt-4 flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="show-deleted"
+              checked={showDeleted}
+              onChange={(e) => setShowDeleted(e.target.checked)}
+              className="h-4 w-4 rounded border-[#303136] bg-[#24262C] text-[#F6D365] focus:ring-[#60A5FA]"
+            />
+            <label htmlFor="show-deleted" className="text-sm text-[#A1A1AA] cursor-pointer">
+              Show deleted sessions
+            </label>
           </div>
         </CardContent>
       </Card>
@@ -329,7 +356,15 @@ export default function SessionsList() {
                           />
                         </TableCell>
                         <TableCell className="font-mono text-sm text-[#A1A1AA]">
-                          {session.id.slice(0, 8)}...
+                          <div className="flex items-center gap-2">
+                            {session.id.slice(0, 8)}...
+                            {session.deleted_at && (
+                              <Badge className="bg-[#6B7280]/20 text-[#6B7280] border-[#6B7280]/30 text-xs">
+                                <Archive className="h-3 w-3 mr-1" />
+                                Deleted
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-[#F3F4F6]">
                           {getAgentName(session.agent_id)}
@@ -365,28 +400,51 @@ export default function SessionsList() {
                               align="end"
                               className="bg-[#282A30] border-[#303136]"
                             >
-                              <DropdownMenuItem
-                                onClick={() => handleViewSession(session.id)}
-                                className="text-[#F3F4F6] hover:bg-[#24262C] cursor-pointer"
-                              >
-                                <Eye className="mr-2 h-4 w-4" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => navigate(`/dashboard/sessions/${session.id}`)}
-                                className="text-[#F3F4F6] hover:bg-[#24262C] cursor-pointer"
-                              >
-                                <Eye className="mr-2 h-4 w-4" />
-                                Open Inspector
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator className="bg-[#303136]" />
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteSession(session.id)}
-                                className="text-[#F87171] hover:bg-[#F87171]/10 cursor-pointer"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
+                              {!session.deleted_at ? (
+                                <>
+                                  <DropdownMenuItem
+                                    onClick={() => handleViewSession(session.id)}
+                                    className="text-[#F3F4F6] hover:bg-[#24262C] cursor-pointer"
+                                  >
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => navigate(`/dashboard/sessions/${session.id}`)}
+                                    className="text-[#F3F4F6] hover:bg-[#24262C] cursor-pointer"
+                                  >
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    Open Inspector
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator className="bg-[#303136]" />
+                                  <DropdownMenuItem
+                                    onClick={() => handleDeleteSession(session.id)}
+                                    className="text-[#F87171] hover:bg-[#F87171]/10 cursor-pointer"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </>
+                              ) : (
+                                <>
+                                  <DropdownMenuItem
+                                    onClick={() => handleRestoreSession(session.id)}
+                                    disabled={restoreSessionMutation.isPending}
+                                    className="text-[#4ADE80] hover:bg-[#4ADE80]/10 cursor-pointer"
+                                  >
+                                    <RotateCcw className="mr-2 h-4 w-4" />
+                                    Restore
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator className="bg-[#303136]" />
+                                  <DropdownMenuItem
+                                    onClick={() => handleViewSession(session.id)}
+                                    className="text-[#F3F4F6] hover:bg-[#24262C] cursor-pointer"
+                                  >
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>

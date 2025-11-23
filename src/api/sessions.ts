@@ -9,6 +9,7 @@ export interface SessionFilters {
   date_to?: string
   page?: number
   pageSize?: number
+  include_deleted?: boolean
 }
 
 export interface SessionListResponse {
@@ -24,7 +25,54 @@ export const sessionsApi = {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
 
-    // Build query - sessions are accessible via agent ownership
+    // Use the search function if search text is provided, otherwise use standard query
+    if (filters?.search && filters.search.trim().length > 0) {
+      // Use the database search function for better performance
+      const { data: searchResults, error: searchError } = await supabase.rpc('search_sessions', {
+        search_text: filters.search.trim(),
+        agent_uuid: filters.agent_id || null,
+        status_filter: filters.status && filters.status !== 'all' ? filters.status : null,
+        date_from: filters.date_from || null,
+        date_to: filters.date_to || null,
+        include_deleted: filters.include_deleted || false,
+      })
+
+      if (searchError) throw searchError
+
+      // Pagination for search results
+      const page = filters?.page || 1
+      const pageSize = filters?.pageSize || 20
+      const from = (page - 1) * pageSize
+      const to = from + pageSize
+
+      const paginatedResults = (searchResults || []).slice(from, to)
+      const total = (searchResults || []).length
+
+      // Transform to Session format
+      const sessions: Session[] = paginatedResults.map((item: any) => ({
+        id: item.id,
+        agent_id: item.agent_id,
+        visitor_id: item.visitor_id,
+        status: item.status,
+        visitor_metadata: item.visitor_metadata || {},
+        started_at: item.started_at,
+        completed_at: item.completed_at,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        deleted_at: item.deleted_at,
+        deleted_by: item.deleted_by,
+      }))
+
+      return {
+        sessions,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      }
+    }
+
+    // Standard query for non-search cases
     let query = supabase
       .from("sessions")
       .select(`
@@ -33,6 +81,11 @@ export const sessionsApi = {
       `, { count: "exact" })
       .eq("agents.user_id", user.id)
       .order("started_at", { ascending: false })
+
+    // Exclude deleted sessions by default
+    if (!filters?.include_deleted) {
+      query = query.is("deleted_at", null)
+    }
 
     // Apply agent filter
     if (filters?.agent_id) {
@@ -75,22 +128,11 @@ export const sessionsApi = {
       completed_at: item.completed_at,
       created_at: item.created_at,
       updated_at: item.updated_at,
+      deleted_at: item.deleted_at,
+      deleted_by: item.deleted_by,
     }))
 
-    // Apply search filter if provided (search in visitor metadata or field values)
-    let filteredSessions = sessions
-    if (filters?.search) {
-      const searchLower = filters.search.toLowerCase()
-      // For now, we'll filter client-side. In production, you'd want to add full-text search
-      // This is a simplified version - you might want to search in field_values table
-      filteredSessions = sessions.filter(session => {
-        const metadata = session.visitor_metadata || {}
-        return (
-          session.id.toLowerCase().includes(searchLower) ||
-          (metadata.ip_address && metadata.ip_address.toLowerCase().includes(searchLower))
-        )
-      })
-    }
+    const filteredSessions = sessions
 
     return {
       sessions: filteredSessions,
@@ -148,6 +190,8 @@ export const sessionsApi = {
       completed_at: sessionData.completed_at,
       created_at: sessionData.created_at,
       updated_at: sessionData.updated_at,
+      deleted_at: sessionData.deleted_at,
+      deleted_by: sessionData.deleted_by,
       messages: (messagesData || []) as Message[],
       field_values: (fieldValuesData || []) as FieldValue[],
       agent: {
@@ -159,20 +203,52 @@ export const sessionsApi = {
     }
   },
 
+  // Soft delete a session
   delete: async (id: string): Promise<void> => {
-    const { error } = await supabase
-      .from("sessions")
-      .delete()
-      .eq("id", id)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+
+    const { error } = await supabase.rpc('soft_delete_session', {
+      session_uuid: id
+    })
 
     if (error) throw error
   },
 
+  // Soft delete multiple sessions
   deleteMany: async (ids: string[]): Promise<void> => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+
+    // Use Promise.all to soft-delete all sessions
+    const results = await Promise.all(
+      ids.map(id => supabase.rpc('soft_delete_session', { session_uuid: id }))
+    )
+
+    const errors = results.filter(r => r.error).map(r => r.error)
+    if (errors.length > 0) {
+      throw new Error(`Failed to delete ${errors.length} session(s)`)
+    }
+  },
+
+  // Restore a soft-deleted session
+  restore: async (id: string): Promise<void> => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+
+    const { error } = await supabase.rpc('restore_session', {
+      session_uuid: id
+    })
+
+    if (error) throw error
+  },
+
+  // Permanently delete a session (hard delete - use with caution)
+  permanentDelete: async (id: string): Promise<void> => {
     const { error } = await supabase
       .from("sessions")
       .delete()
-      .in("id", ids)
+      .eq("id", id)
 
     if (error) throw error
   },

@@ -7,9 +7,10 @@ import {
   CheckCircle2,
   Trash2,
   ArrowLeft,
+  RotateCcw,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import { useDeleteSession, useResendWebhook, useMarkReviewed } from "@/hooks/useSessions"
+import { useDeleteSession, useResendWebhook, useMarkReviewed, useRestoreSession, useSession } from "@/hooks/useSessions"
 import { toast } from "sonner"
 
 interface ActionsSidebarProps {
@@ -20,19 +21,31 @@ interface ActionsSidebarProps {
 
 export function ActionsSidebar({ sessionId, onExport, onRedact }: ActionsSidebarProps) {
   const navigate = useNavigate()
+  const { data: session } = useSession(sessionId)
   const deleteSession = useDeleteSession()
+  const restoreSession = useRestoreSession()
   const resendWebhook = useResendWebhook()
   const markReviewed = useMarkReviewed()
 
+  const isDeleted = session?.deleted_at !== null && session?.deleted_at !== undefined
+
   const handleDelete = async () => {
-    if (window.confirm("Are you sure you want to delete this session? This action cannot be undone.")) {
+    if (window.confirm("Are you sure you want to delete this session? It can be restored later.")) {
       try {
         await deleteSession.mutateAsync(sessionId)
         toast.success("Session deleted successfully")
-        navigate("/dashboard/sessions")
       } catch (error) {
         // Error handled by hook
       }
+    }
+  }
+
+  const handleRestore = async () => {
+    try {
+      await restoreSession.mutateAsync(sessionId)
+      toast.success("Session restored successfully")
+    } catch (error) {
+      // Error handled by hook
     }
   }
 
@@ -112,15 +125,27 @@ export function ActionsSidebar({ sessionId, onExport, onRedact }: ActionsSidebar
           </Button>
 
           <div className="pt-2 border-t border-[#303136]">
-            <Button
-              onClick={handleDelete}
-              variant="outline"
-              disabled={deleteSession.isPending}
-              className="w-full justify-start border-[#F87171]/30 text-[#F87171] hover:bg-[#F87171]/10 hover:border-[#F87171]/50"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              {deleteSession.isPending ? "Deleting..." : "Delete Session"}
-            </Button>
+            {isDeleted ? (
+              <Button
+                onClick={handleRestore}
+                variant="outline"
+                disabled={restoreSession.isPending}
+                className="w-full justify-start border-[#4ADE80]/30 text-[#4ADE80] hover:bg-[#4ADE80]/10 hover:border-[#4ADE80]/50"
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                {restoreSession.isPending ? "Restoring..." : "Restore Session"}
+              </Button>
+            ) : (
+              <Button
+                onClick={handleDelete}
+                variant="outline"
+                disabled={deleteSession.isPending}
+                className="w-full justify-start border-[#F87171]/30 text-[#F87171] hover:bg-[#F87171]/10 hover:border-[#F87171]/50"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {deleteSession.isPending ? "Deleting..." : "Delete Session"}
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

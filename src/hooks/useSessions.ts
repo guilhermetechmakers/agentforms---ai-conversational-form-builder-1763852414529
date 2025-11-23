@@ -32,12 +32,28 @@ export const useDeleteSession = () => {
   return useMutation({
     mutationFn: sessionsApi.delete,
     onSuccess: (_, deletedId) => {
-      queryClient.removeQueries({ queryKey: sessionKeys.detail(deletedId) })
+      queryClient.invalidateQueries({ queryKey: sessionKeys.detail(deletedId) })
       queryClient.invalidateQueries({ queryKey: sessionKeys.lists() })
       toast.success("Session deleted successfully!")
     },
     onError: (error: Error) => {
       toast.error(`Failed to delete session: ${error.message}`)
+    },
+  })
+}
+
+export const useRestoreSession = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: sessionsApi.restore,
+    onSuccess: (_, restoredId) => {
+      queryClient.invalidateQueries({ queryKey: sessionKeys.detail(restoredId) })
+      queryClient.invalidateQueries({ queryKey: sessionKeys.lists() })
+      toast.success("Session restored successfully!")
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to restore session: ${error.message}`)
     },
   })
 }

@@ -89,6 +89,14 @@ export function MetadataSection({ session, agentName }: MetadataSectionProps) {
               </p>
             </div>
           )}
+          {session.deleted_at && (
+            <div className="space-y-1 md:col-span-2">
+              <p className="text-sm text-[#A1A1AA]">Deleted At</p>
+              <p className="text-[#F87171] text-sm">
+                {format(new Date(session.deleted_at), "PPp")}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Visitor Metadata */}

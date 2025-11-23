@@ -1,0 +1,19 @@
+{
+  "migration_name": "20251123022012_add_soft_delete_and_search_to_sessions",
+  "created_at": "2025-11-23T02:20:12Z",
+  "description": "Add soft-delete support and enhanced full-text search capabilities to sessions table",
+  "tables_created": [],
+  "tables_modified": ["sessions", "messages", "field_values"],
+  "tables_deleted": [],
+  "breaking_changes": false,
+  "rollback_sql": "See migration file for detailed rollback instructions",
+  "estimated_rows": 0,
+  "requires_downtime": false,
+  "features_added": [
+    "Soft-delete support for sessions",
+    "Full-text search across sessions, messages, and field values",
+    "Relevance scoring for search results",
+    "Automatic audit trail logging for soft-deletes",
+    "Restore functionality for soft-deleted sessions"
+  ]
+}

@@ -8,6 +8,8 @@ export interface Session {
   completed_at?: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at?: string | null;
+  deleted_by?: string | null;
 }
 
 export interface VisitorMetadata {
