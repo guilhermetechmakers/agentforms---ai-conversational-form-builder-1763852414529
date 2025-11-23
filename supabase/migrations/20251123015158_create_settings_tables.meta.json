@@ -1,0 +1,17 @@
+{
+  "migration_name": "20251123015158_create_settings_tables",
+  "created_at": "2025-11-23T01:51:58Z",
+  "description": "Create tables for LLM provider settings, data retention policies, audit logs, and SSO configurations",
+  "tables_created": [
+    "llm_provider_settings",
+    "data_retention_settings",
+    "audit_logs",
+    "sso_configurations"
+  ],
+  "tables_modified": [],
+  "tables_deleted": [],
+  "breaking_changes": false,
+  "rollback_sql": "DROP TABLE IF EXISTS sso_configurations CASCADE; DROP TABLE IF EXISTS audit_logs CASCADE; DROP TABLE IF EXISTS data_retention_settings CASCADE; DROP TABLE IF EXISTS llm_provider_settings CASCADE;",
+  "estimated_rows": 0,
+  "requires_downtime": false
+}
