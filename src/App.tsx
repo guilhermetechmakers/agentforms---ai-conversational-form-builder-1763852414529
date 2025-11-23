@@ -25,6 +25,7 @@ import CheckoutSuccess from "@/pages/CheckoutSuccess"
 import EmailVerification from "@/pages/EmailVerification"
 import UserProfile from "@/pages/UserProfile"
 import AdminDashboard from "@/pages/AdminDashboard"
+import Webhooks from "@/pages/Webhooks"
 
 // React Query client with optimal defaults
 const queryClient = new QueryClient({
@@ -141,6 +142,14 @@ function App() {
             element={
               <DashboardLayout>
                 <AdminDashboard />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/dashboard/webhooks"
+            element={
+              <DashboardLayout>
+                <Webhooks />
               </DashboardLayout>
             }
           />
