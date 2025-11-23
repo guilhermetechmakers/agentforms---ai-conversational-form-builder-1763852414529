@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { useDeliveryLogs } from "@/hooks/useWebhooks"
 import { formatDistanceToNow } from "date-fns"
+import { toast } from "sonner"
 import type { DeliveryLog } from "@/types/webhook"
 
 interface DeliveryLogsProps {
@@ -90,6 +91,7 @@ export function DeliveryLogs({ webhookId, sessionId }: DeliveryLogsProps) {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
+    toast.success("Copied to clipboard")
   }
 
   if (isLoading) {

@@ -1,4 +1,8 @@
 import { supabase } from "@/lib/supabase"
+import {
+  forwardWebhook,
+  buildWebhookPayload,
+} from "@/lib/webhook-utils"
 import type {
   Webhook,
   CreateWebhookInput,
@@ -121,57 +125,30 @@ export const webhooksApi = {
   },
 
   testDelivery: async (id: string): Promise<{ success: boolean; response_code?: number; response_body?: string; error?: string }> => {
-    // This would typically call a backend endpoint that triggers the webhook
-    // For now, we'll return a mock response structure
-    // In production, this should call: POST /api/webhooks/{id}/test
     try {
       const webhook = await webhooksApi.getById(id)
       
-      // Generate sample payload
-      const samplePayload = {
-        event: 'test',
-        webhook_id: webhook.id,
-        timestamp: new Date().toISOString(),
-        data: {
-          session_id: 'test-session-id',
-          agent_id: webhook.agent_id,
-          test: true,
-        },
-      }
-
-      // In production, this would make an actual HTTP request
-      // For now, we'll simulate it
-      const response = await fetch(webhook.url, {
-        method: webhook.method,
-        headers: {
-          'Content-Type': 'application/json',
-          ...webhook.headers,
-          ...(webhook.auth_type === 'bearer' && webhook.auth_token
-            ? { Authorization: `Bearer ${webhook.auth_token}` }
-            : {}),
-          ...(webhook.auth_type === 'basic' && webhook.auth_token
-            ? { Authorization: `Basic ${webhook.auth_token}` }
-            : {}),
-        },
-        body: JSON.stringify(samplePayload),
+      // Generate test payload
+      const samplePayload = buildWebhookPayload('test', {
+        session_id: 'test-session-id',
+        agent_id: webhook.agent_id,
+        test: true,
       })
 
-      const responseBody = await response.text()
+      // Use the webhook forwarding utility with proper HMAC support
+      const result = await forwardWebhook(
+        webhook,
+        {
+          ...samplePayload,
+          webhook_id: webhook.id,
+        },
+        1,
+        async (log) => {
+          return await webhooksApi.logDelivery(log)
+        }
+      )
 
-      // Log the delivery attempt
-      await webhooksApi.logDelivery({
-        webhook_id: id,
-        status: response.ok ? 'success' : 'failed',
-        response_code: response.status,
-        response_body: responseBody,
-        request_payload: samplePayload,
-      })
-
-      return {
-        success: response.ok,
-        response_code: response.status,
-        response_body: responseBody,
-      }
+      return result
     } catch (error: any) {
       // Log failed delivery
       await webhooksApi.logDelivery({
@@ -252,23 +229,95 @@ export const webhooksApi = {
     return data as DeliveryLog
   },
 
+  getWebhooksForEvent: async (eventType: string, agentId?: string): Promise<Webhook[]> => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+
+    let query = supabase
+      .from("webhooks")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("enabled", true)
+      .eq("status", "active")
+      .contains("triggers", [eventType])
+
+    // Filter by agent if provided, or get global webhooks (agent_id is null)
+    if (agentId) {
+      query = query.or(`agent_id.eq.${agentId},agent_id.is.null`)
+    } else {
+      query = query.is("agent_id", null)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+    return (data || []) as Webhook[]
+  },
+
+  triggerWebhooksForEvent: async (
+    eventType: string,
+    payload: Record<string, any>,
+    agentId?: string
+  ): Promise<Array<{ webhook_id: string; success: boolean; error?: string }>> => {
+    try {
+      const webhooks = await webhooksApi.getWebhooksForEvent(eventType, agentId)
+      const results: Array<{ webhook_id: string; success: boolean; error?: string }> = []
+
+      // Trigger all matching webhooks (in parallel, but with rate limiting consideration)
+      const promises = webhooks.map(async (webhook) => {
+        try {
+          const result = await forwardWebhook(
+            webhook,
+            {
+              ...payload,
+              webhook_id: webhook.id,
+            },
+            1,
+            async (log) => {
+              return await webhooksApi.logDelivery(log)
+            }
+          )
+
+          return {
+            webhook_id: webhook.id,
+            success: result.success,
+            error: result.error,
+          }
+        } catch (error: any) {
+          return {
+            webhook_id: webhook.id,
+            success: false,
+            error: error.message,
+          }
+        }
+      })
+
+      const webhookResults = await Promise.all(promises)
+      results.push(...webhookResults)
+
+      return results
+    } catch (error: any) {
+      throw new Error(`Failed to trigger webhooks: ${error.message}`)
+    }
+  },
+
   logDelivery: async (log: {
     webhook_id: string
-    session_id?: string
+    session_id?: string | null
     status: 'pending' | 'success' | 'failed' | 'retrying'
     attempt_number?: number
-    response_code?: number
-    response_body?: string
+    response_code?: number | null
+    response_body?: string | null
     response_headers?: Record<string, string>
-    error_message?: string
-    error_type?: string
-    request_payload?: Record<string, any>
+    error_message?: string | null
+    error_type?: string | null
+    request_payload?: Record<string, any> | null
     request_headers?: Record<string, string>
     started_at?: string
-    completed_at?: string
-    duration_ms?: number
+    completed_at?: string | null
+    duration_ms?: number | null
     will_retry?: boolean
-    next_retry_at?: string
+    next_retry_at?: string | null
   }): Promise<DeliveryLog> => {
     const { data, error } = await supabase
       .from("delivery_logs")

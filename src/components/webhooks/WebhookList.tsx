@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { useWebhooks, useDeleteWebhook, useTestWebhook } from "@/hooks/useWebhooks"
 import { formatDistanceToNow } from "date-fns"
+import { toast } from "sonner"
 import type { Webhook, WebhookFilters } from "@/types/webhook"
 
 interface WebhookListProps {
@@ -88,6 +89,7 @@ export function WebhookList({ onEdit, onCreate, filters }: WebhookListProps) {
 
   const handleCopyUrl = (url: string) => {
     navigator.clipboard.writeText(url)
+    toast.success("URL copied to clipboard")
   }
 
   if (isLoading) {

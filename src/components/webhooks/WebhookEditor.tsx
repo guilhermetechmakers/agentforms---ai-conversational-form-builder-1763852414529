@@ -150,6 +150,7 @@ export function WebhookEditor({ webhook, onSuccess, onCancel }: WebhookEditorPro
   }
 
   const handleTest = async () => {
+    // For new webhooks, we need to save first
     if (!webhook) {
       toast.error("Please save the webhook first before testing")
       return
