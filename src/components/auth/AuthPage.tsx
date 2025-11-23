@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { supabase } from "@/lib/supabase"
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter"
 import { 
   Mail, 
   Lock, 
@@ -20,7 +21,9 @@ import {
   Chrome, 
   Loader2,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Eye,
+  EyeOff
 } from "lucide-react"
 
 // Validation schemas
@@ -56,6 +59,8 @@ export function AuthPage({ defaultTab = "login" }: AuthPageProps) {
   const [activeTab, setActiveTab] = useState<"login" | "signup">(defaultTab)
   const [isLoading, setIsLoading] = useState(false)
   const [oauthLoading, setOauthLoading] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showSignupPassword, setShowSignupPassword] = useState(false)
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
@@ -79,6 +84,8 @@ export function AuthPage({ defaultTab = "login" }: AuthPageProps) {
     },
   })
 
+  const signupPassword = signupForm.watch("password")
+
   const handleLogin = async (data: LoginFormData) => {
     setIsLoading(true)
     try {
@@ -90,6 +97,15 @@ export function AuthPage({ defaultTab = "login" }: AuthPageProps) {
       if (error) throw error
 
       if (authData.user) {
+        // Check if email is verified
+        if (!authData.user.email_confirmed_at) {
+          toast.warning("Email not verified", {
+            description: "Please verify your email to access all features.",
+          })
+          navigate("/verify-email")
+          return
+        }
+
         toast.success("Welcome back!", {
           description: "You've been successfully logged in.",
         })
@@ -130,7 +146,9 @@ export function AuthPage({ defaultTab = "login" }: AuthPageProps) {
         })
         
         // Redirect to email verification page
-        navigate("/verify-email")
+        navigate("/verify-email", { 
+          state: { email: data.email } 
+        })
       }
     } catch (error: any) {
       toast.error("Signup failed", {
@@ -237,14 +255,26 @@ export function AuthPage({ defaultTab = "login" }: AuthPageProps) {
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="login-password"
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
-                        className="pl-10"
+                        className="pl-10 pr-10 focus-ring"
                         {...loginForm.register("password")}
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
                     </div>
                     {loginForm.formState.errors.password && (
-                      <p className="text-sm text-status-high">
+                      <p className="text-sm text-status-high flex items-center gap-1">
                         {loginForm.formState.errors.password.message}
                       </p>
                     )}
@@ -253,7 +283,10 @@ export function AuthPage({ defaultTab = "login" }: AuthPageProps) {
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="remember-me"
-                      {...loginForm.register("rememberMe")}
+                      checked={loginForm.watch("rememberMe")}
+                      onCheckedChange={(checked) => 
+                        loginForm.setValue("rememberMe", checked === true)
+                      }
                     />
                     <Label
                       htmlFor="remember-me"
@@ -333,14 +366,27 @@ export function AuthPage({ defaultTab = "login" }: AuthPageProps) {
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="signup-password"
-                        type="password"
+                        type={showSignupPassword ? "text" : "password"}
                         placeholder="••••••••"
-                        className="pl-10"
+                        className="pl-10 pr-10 focus-ring"
                         {...signupForm.register("password")}
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowSignupPassword(!showSignupPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label={showSignupPassword ? "Hide password" : "Show password"}
+                      >
+                        {showSignupPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
                     </div>
+                    {signupPassword && <PasswordStrengthMeter password={signupPassword} />}
                     {signupForm.formState.errors.password && (
-                      <p className="text-sm text-status-high">
+                      <p className="text-sm text-status-high flex items-center gap-1">
                         {signupForm.formState.errors.password.message}
                       </p>
                     )}
@@ -365,7 +411,10 @@ export function AuthPage({ defaultTab = "login" }: AuthPageProps) {
                   <div className="flex items-start space-x-2">
                     <Checkbox
                       id="terms"
-                      {...signupForm.register("termsAccepted")}
+                      checked={signupForm.watch("termsAccepted")}
+                      onCheckedChange={(checked) => 
+                        signupForm.setValue("termsAccepted", checked === true)
+                      }
                       className="mt-1"
                     />
                     <Label

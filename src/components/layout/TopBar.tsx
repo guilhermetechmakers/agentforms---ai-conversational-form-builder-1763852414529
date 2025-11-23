@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useProfile } from "@/hooks/useProfile"
-import { authApi } from "@/api/auth"
+import { useAuth } from "@/contexts/AuthContext"
 import { toast } from "sonner"
 
 interface TopBarProps {
@@ -21,11 +21,12 @@ interface TopBarProps {
 
 export function TopBar({ sidebarCollapsed = false }: TopBarProps) {
   const { data: profileData } = useProfile()
+  const { signOut } = useAuth()
 
   const handleSignOut = async () => {
     try {
-      await authApi.signOut()
-      window.location.href = "/login"
+      await signOut()
+      toast.success("Signed out successfully")
     } catch (error) {
       toast.error("Failed to sign out")
     }

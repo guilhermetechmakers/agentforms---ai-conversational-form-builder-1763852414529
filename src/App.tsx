@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as SonnerToaster } from "sonner"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { AuthProvider } from "@/contexts/AuthContext"
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 
 // Pages
 import Landing from "@/pages/Landing"
@@ -48,7 +50,8 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Routes>
+        <AuthProvider>
+          <Routes>
           {/* Public routes */}
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
@@ -65,143 +68,191 @@ function App() {
           <Route
             path="/dashboard"
             element={
-              <DashboardLayout>
-                <Dashboard />
-              </DashboardLayout>
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Dashboard />
+                </DashboardLayout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/dashboard/agents"
             element={
-              <DashboardLayout>
-                <Dashboard />
-              </DashboardLayout>
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Dashboard />
+                </DashboardLayout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/dashboard/agents/new"
             element={
-              <DashboardLayout>
-                <AgentBuilder />
-              </DashboardLayout>
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <AgentBuilder />
+                </DashboardLayout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/dashboard/agents/:id"
             element={
-              <DashboardLayout>
-                <AgentBuilder />
-              </DashboardLayout>
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <AgentBuilder />
+                </DashboardLayout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/dashboard/agents/:id/sandbox"
             element={
-              <DashboardLayout>
-                <AgentSandbox />
-              </DashboardLayout>
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <AgentSandbox />
+                </DashboardLayout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/dashboard/sessions"
             element={
-              <DashboardLayout>
-                <SessionsList />
-              </DashboardLayout>
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <SessionsList />
+                </DashboardLayout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/dashboard/sessions/:id"
             element={
-              <DashboardLayout>
-                <SessionInspector />
-              </DashboardLayout>
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <SessionInspector />
+                </DashboardLayout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/dashboard/help"
             element={
-              <DashboardLayout>
-                <AboutHelp />
-              </DashboardLayout>
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <AboutHelp />
+                </DashboardLayout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/help"
             element={
-              <DashboardLayout>
-                <AboutHelp />
-              </DashboardLayout>
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <AboutHelp />
+                </DashboardLayout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/dashboard/profile"
             element={
-              <DashboardLayout>
-                <UserProfile />
-              </DashboardLayout>
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <UserProfile />
+                </DashboardLayout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/dashboard/admin"
             element={
-              <DashboardLayout>
-                <AdminDashboard />
-              </DashboardLayout>
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <AdminDashboard />
+                </DashboardLayout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/dashboard/webhooks"
             element={
-              <DashboardLayout>
-                <Webhooks />
-              </DashboardLayout>
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Webhooks />
+                </DashboardLayout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/dashboard/settings"
             element={
-              <DashboardLayout>
-                <Settings />
-              </DashboardLayout>
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Settings />
+                </DashboardLayout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/dashboard/security"
             element={
-              <DashboardLayout>
-                <SecurityCompliance />
-              </DashboardLayout>
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <SecurityCompliance />
+                </DashboardLayout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/dashboard/billing"
             element={
-              <DashboardLayout>
-                <Billing />
-              </DashboardLayout>
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Billing />
+                </DashboardLayout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/dashboard/llm-orchestration"
             element={
-              <DashboardLayout>
-                <LLMOrchestration />
-              </DashboardLayout>
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <LLMOrchestration />
+                </DashboardLayout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/dashboard/exports"
             element={
-              <DashboardLayout>
-                <Exports />
-              </DashboardLayout>
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Exports />
+                </DashboardLayout>
+              </ProtectedRoute>
             }
           />
 
           {/* Billing routes */}
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/checkout/success" element={<CheckoutSuccess />} />
+          <Route 
+            path="/checkout" 
+            element={
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/checkout/success" 
+            element={
+              <ProtectedRoute>
+                <CheckoutSuccess />
+              </ProtectedRoute>
+            } 
+          />
 
           {/* Legal pages */}
           <Route path="/privacy" element={<PrivacyTerms />} />
@@ -216,6 +267,7 @@ function App() {
         </Routes>
         <Toaster />
         <SonnerToaster position="top-center" richColors />
+        </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
   )
