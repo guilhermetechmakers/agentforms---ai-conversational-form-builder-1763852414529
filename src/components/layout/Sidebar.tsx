@@ -8,11 +8,13 @@ import {
   Webhook,
   ChevronLeft,
   ChevronRight,
-  HelpCircle
+  HelpCircle,
+  Shield
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useProfile } from "@/hooks/useProfile"
 
-const navigation = [
+const baseNavigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Agents", href: "/dashboard/agents", icon: MessageSquare },
   { name: "Sessions", href: "/dashboard/sessions", icon: FileText },
@@ -29,6 +31,16 @@ interface SidebarProps {
 export function Sidebar({ onCollapseChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false)
   const location = useLocation()
+  const { data: profileData } = useProfile()
+  
+  const isAdmin = profileData?.profile?.role === "admin"
+  
+  const navigation = isAdmin
+    ? [
+        ...baseNavigation,
+        { name: "Admin", href: "/dashboard/admin", icon: Shield },
+      ]
+    : baseNavigation
 
   const handleToggle = () => {
     const newCollapsed = !collapsed

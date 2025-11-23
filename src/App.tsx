@@ -23,6 +23,7 @@ import Checkout from "@/pages/Checkout"
 import CheckoutSuccess from "@/pages/CheckoutSuccess"
 import EmailVerification from "@/pages/EmailVerification"
 import UserProfile from "@/pages/UserProfile"
+import AdminDashboard from "@/pages/AdminDashboard"
 
 // React Query client with optimal defaults
 const queryClient = new QueryClient({
@@ -123,6 +124,14 @@ function App() {
             element={
               <DashboardLayout>
                 <UserProfile />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/dashboard/admin"
+            element={
+              <DashboardLayout>
+                <AdminDashboard />
               </DashboardLayout>
             }
           />

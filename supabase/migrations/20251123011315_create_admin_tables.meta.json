@@ -1,0 +1,12 @@
+{
+  "migration_name": "20251123011315_create_admin_tables",
+  "created_at": "2025-11-23T01:13:15Z",
+  "description": "Create tables for Admin Dashboard: organizations, system_metrics, audit_logs, moderation_queue",
+  "tables_created": ["organizations", "system_metrics", "audit_logs", "moderation_queue"],
+  "tables_modified": [],
+  "tables_deleted": [],
+  "breaking_changes": false,
+  "rollback_sql": "DROP TABLE IF EXISTS moderation_queue CASCADE; DROP TABLE IF EXISTS audit_logs CASCADE; DROP TABLE IF EXISTS system_metrics CASCADE; DROP TABLE IF EXISTS organizations CASCADE;",
+  "estimated_rows": 0,
+  "requires_downtime": false
+}
