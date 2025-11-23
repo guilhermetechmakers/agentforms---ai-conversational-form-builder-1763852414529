@@ -21,6 +21,7 @@ import { toast } from "sonner"
 const profileSchema = z.object({
   full_name: z.string().min(1, "Name is required").max(100),
   company: z.string().max(100).optional().or(z.literal("")),
+  contact_number: z.string().max(20).optional().or(z.literal("")),
   timezone: z.string().min(1, "Timezone is required"),
   language: z.string().min(1, "Language is required"),
 })
@@ -49,6 +50,7 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
     defaultValues: {
       full_name: profileData?.profile?.full_name || "",
       company: profileData?.profile?.company || "",
+      contact_number: profileData?.profile?.contact_number || "",
       timezone: profileData?.profile?.timezone || "UTC",
       language: profileData?.profile?.language || "en",
     },
@@ -60,6 +62,7 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
       reset({
         full_name: profileData.profile.full_name || "",
         company: profileData.profile.company || "",
+        contact_number: profileData.profile.contact_number || "",
         timezone: profileData.profile.timezone || "UTC",
         language: profileData.profile.language || "en",
       })
@@ -99,6 +102,7 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
       await updateProfile.mutateAsync({
         full_name: data.full_name,
         company: data.company || undefined,
+        contact_number: data.contact_number || undefined,
         timezone: data.timezone,
         language: data.language,
         avatar_url: avatarUrl,
@@ -183,6 +187,20 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
             />
             {errors.company && (
               <p className="text-sm text-[#F87171]">{errors.company.message}</p>
+            )}
+          </div>
+
+          {/* Contact Number */}
+          <div className="space-y-2">
+            <Label htmlFor="contact_number">Contact Number</Label>
+            <Input
+              id="contact_number"
+              {...register("contact_number")}
+              placeholder="+1 (555) 123-4567"
+              className="bg-[#24262C] border-[#303136]"
+            />
+            {errors.contact_number && (
+              <p className="text-sm text-[#F87171]">{errors.contact_number.message}</p>
             )}
           </div>
 

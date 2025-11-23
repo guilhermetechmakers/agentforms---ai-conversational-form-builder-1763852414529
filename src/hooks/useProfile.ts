@@ -3,7 +3,8 @@ import { toast } from "sonner"
 import { profileApi } from "@/api/profile"
 import type { 
   UpdateProfileInput, 
-  ChangePasswordInput
+  ChangePasswordInput,
+  Verify2FAInput
 } from "@/types/profile"
 
 // Query keys
@@ -11,6 +12,8 @@ export const profileKeys = {
   all: ["profile"] as const,
   profile: () => [...profileKeys.all, "current"] as const,
   sessions: () => [...profileKeys.all, "sessions"] as const,
+  auditLogs: () => [...profileKeys.all, "audit-logs"] as const,
+  avatars: () => [...profileKeys.all, "avatars"] as const,
 }
 
 /**
@@ -50,10 +53,9 @@ export function useUploadAvatar() {
 
   return useMutation({
     mutationFn: (file: File) => profileApi.uploadAvatar(file),
-    onSuccess: async (url) => {
-      // Update profile with new avatar URL
-      await profileApi.updateProfile({ avatar_url: url })
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: profileKeys.profile() })
+      queryClient.invalidateQueries({ queryKey: profileKeys.avatars() })
       toast.success("Avatar uploaded successfully")
     },
     onError: (error: Error) => {
@@ -78,7 +80,37 @@ export function useChangePassword() {
 }
 
 /**
- * Enable 2FA
+ * Setup 2FA - Generate secret and QR code
+ */
+export function useSetup2FA() {
+  return useMutation({
+    mutationFn: () => profileApi.setup2FA(),
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to setup 2FA")
+    },
+  })
+}
+
+/**
+ * Verify and enable 2FA
+ */
+export function useVerifyAndEnable2FA() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: Verify2FAInput) => profileApi.verifyAndEnable2FA(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: profileKeys.profile() })
+      toast.success("Two-factor authentication enabled")
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to enable 2FA")
+    },
+  })
+}
+
+/**
+ * Enable 2FA (legacy - kept for backward compatibility)
  */
 export function useEnable2FA() {
   const queryClient = useQueryClient()
@@ -189,14 +221,42 @@ export function useExportData() {
  */
 export function useDeleteAccount() {
   return useMutation({
-    mutationFn: () => profileApi.deleteAccount(),
-    onSuccess: () => {
-      toast.success("Account deleted successfully")
+    mutationFn: (reason?: string) => profileApi.deleteAccount(reason),
+    onSuccess: (restoreToken) => {
+      toast.success("Account deletion requested. You have been signed out.")
+      // Store restore token in localStorage for potential recovery
+      if (restoreToken) {
+        localStorage.setItem('account_restore_token', restoreToken)
+      }
       // Redirect to landing page
-      window.location.href = "/"
+      setTimeout(() => {
+        window.location.href = "/"
+      }, 2000)
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to delete account")
     },
+  })
+}
+
+/**
+ * Get audit logs
+ */
+export function useAuditLogs(limit: number = 50) {
+  return useQuery({
+    queryKey: [...profileKeys.auditLogs(), limit],
+    queryFn: () => profileApi.getAuditLogs(limit),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
+}
+
+/**
+ * Get avatars
+ */
+export function useAvatars() {
+  return useQuery({
+    queryKey: profileKeys.avatars(),
+    queryFn: () => profileApi.getAvatars(),
+    staleTime: 1000 * 60 * 5, // 5 minutes
   })
 }

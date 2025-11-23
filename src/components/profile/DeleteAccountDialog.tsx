@@ -32,7 +32,7 @@ export function DeleteAccountDialog({
     if (!requiresConfirmation) return
 
     try {
-      await deleteAccount.mutateAsync()
+      await deleteAccount.mutateAsync(undefined)
       // Redirect handled by mutation
     } catch (error) {
       // Error handled by mutation

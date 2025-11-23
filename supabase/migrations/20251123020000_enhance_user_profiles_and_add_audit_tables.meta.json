@@ -1,0 +1,12 @@
+{
+  "migration_name": "20251123020000_enhance_user_profiles_and_add_audit_tables",
+  "created_at": "2025-11-23T02:00:00Z",
+  "description": "Enhance user_profiles table with contact_number and backup_codes, and create avatars, audit_logs, and soft_deletes tables for comprehensive profile management",
+  "tables_created": ["avatars", "audit_logs", "soft_deletes"],
+  "tables_modified": ["user_profiles"],
+  "tables_deleted": [],
+  "breaking_changes": false,
+  "rollback_sql": "DROP FUNCTION IF EXISTS generate_restore_token(); DROP FUNCTION IF EXISTS create_audit_log(UUID, TEXT, JSONB, INET, TEXT); DROP TABLE IF EXISTS soft_deletes CASCADE; DROP TABLE IF EXISTS audit_logs CASCADE; DROP TABLE IF EXISTS avatars CASCADE; ALTER TABLE user_profiles DROP COLUMN IF EXISTS backup_codes; ALTER TABLE user_profiles DROP COLUMN IF EXISTS contact_number;",
+  "estimated_rows": 0,
+  "requires_downtime": false
+}

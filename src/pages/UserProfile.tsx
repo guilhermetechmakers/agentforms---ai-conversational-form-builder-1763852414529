@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
@@ -18,10 +19,13 @@ import {
   Building,
   Globe,
   Languages,
+  Phone,
+  User,
 } from "lucide-react"
 import { useProfile, useDisable2FA, useExportData } from "@/hooks/useProfile"
 import { EditProfileDialog } from "@/components/profile/EditProfileDialog"
 import { ChangePasswordDialog } from "@/components/profile/ChangePasswordDialog"
+import { Setup2FADialog } from "@/components/profile/Setup2FADialog"
 import { ActiveSessionsList } from "@/components/profile/ActiveSessionsList"
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog"
 
@@ -31,7 +35,9 @@ export default function UserProfile() {
   const exportData = useExportData()
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
+  const [setup2FADialogOpen, setSetup2FADialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState("personal")
 
   if (isLoading) {
     return (
@@ -58,13 +64,14 @@ export default function UserProfile() {
     .slice(0, 2) || "U"
 
   const handle2FAToggle = async (enabled: boolean) => {
-    if (!enabled && profile?.two_factor_enabled) {
+    if (enabled && !profile?.two_factor_enabled) {
+      // Open setup dialog
+      setSetup2FADialogOpen(true)
+    } else if (!enabled && profile?.two_factor_enabled) {
       if (confirm("Are you sure you want to disable two-factor authentication?")) {
         await disable2FA.mutateAsync()
       }
     }
-    // Enable 2FA would require a separate flow with QR code generation
-    // For now, we'll just handle disabling
   }
 
   return (
@@ -77,8 +84,27 @@ export default function UserProfile() {
         </div>
       </div>
 
-      {/* Profile Summary */}
-      <Card>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 gap-2">
+          <TabsTrigger value="personal" className="gap-2">
+            <User className="h-4 w-4" />
+            <span className="hidden sm:inline">Personal Info</span>
+          </TabsTrigger>
+          <TabsTrigger value="security" className="gap-2">
+            <Shield className="h-4 w-4" />
+            <span className="hidden sm:inline">Security</span>
+          </TabsTrigger>
+          <TabsTrigger value="account" className="gap-2">
+            <Lock className="h-4 w-4" />
+            <span className="hidden sm:inline">Account</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Personal Info Tab */}
+        <TabsContent value="personal" className="mt-6 space-y-6">
+          {/* Profile Summary */}
+          <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -140,6 +166,16 @@ export default function UserProfile() {
                   </div>
                 )}
 
+                {profile?.contact_number && (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-[#A1A1AA]">
+                      <Phone className="h-4 w-4" />
+                      Contact Number
+                    </div>
+                    <p className="text-[#F3F4F6] font-medium">{profile.contact_number}</p>
+                  </div>
+                )}
+
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-sm text-[#A1A1AA]">
                     <Shield className="h-4 w-4" />
@@ -170,9 +206,12 @@ export default function UserProfile() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
 
-      {/* Security Section */}
-      <Card>
+        {/* Security Tab */}
+        <TabsContent value="security" className="mt-6 space-y-6">
+          {/* Security Section */}
+          <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
@@ -232,9 +271,12 @@ export default function UserProfile() {
           <ActiveSessionsList />
         </CardContent>
       </Card>
+        </TabsContent>
 
-      {/* Quick Links */}
-      <Card>
+        {/* Account Tab */}
+        <TabsContent value="account" className="mt-6 space-y-6">
+          {/* Quick Links */}
+          <Card>
         <CardHeader>
           <CardTitle>Quick Links</CardTitle>
           <CardDescription>Access related settings and features</CardDescription>
@@ -322,9 +364,13 @@ export default function UserProfile() {
         </CardContent>
       </Card>
 
+        </TabsContent>
+      </Tabs>
+
       {/* Dialogs */}
       <EditProfileDialog open={editDialogOpen} onOpenChange={setEditDialogOpen} />
       <ChangePasswordDialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen} />
+      <Setup2FADialog open={setup2FADialogOpen} onOpenChange={setSetup2FADialogOpen} />
       <DeleteAccountDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} />
     </div>
   )
