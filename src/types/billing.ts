@@ -235,3 +235,171 @@ export interface InvoicePreview {
   coupon?: Coupon | null;
   currency: string;
 }
+
+// Usage Records
+export interface UsageRecord {
+  id: string;
+  user_id: string;
+  subscription_id: string | null;
+  billing_cycle_start: string;
+  billing_cycle_end: string;
+  metrics: Record<string, number>; // e.g., { llm_calls: 1500, sessions: 250 }
+  quota_limits: Record<string, number>;
+  status: 'active' | 'archived';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UsageRecordInsert {
+  id?: string;
+  user_id: string;
+  subscription_id?: string | null;
+  billing_cycle_start: string;
+  billing_cycle_end: string;
+  metrics?: Record<string, number>;
+  quota_limits?: Record<string, number>;
+  status?: 'active' | 'archived';
+}
+
+export interface UsageRecordUpdate {
+  metrics?: Record<string, number>;
+  quota_limits?: Record<string, number>;
+  status?: 'active' | 'archived';
+}
+
+export type UsageRecordRow = UsageRecord;
+
+export interface UsageSummary {
+  billing_cycle_start: string;
+  billing_cycle_end: string;
+  metrics: Record<string, number>;
+  quota_limits: Record<string, number>;
+  usage_percentage: Record<string, number>; // percentage of quota used
+}
+
+// Invoices
+export interface Invoice {
+  id: string;
+  user_id: string;
+  subscription_id: string | null;
+  transaction_id: string | null;
+  invoice_number: string;
+  amount: number;
+  currency: string;
+  tax_amount: number;
+  discount_amount: number;
+  total_amount: number;
+  invoice_date: string;
+  due_date: string | null;
+  paid_at: string | null;
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'canceled' | 'refunded';
+  pdf_url: string | null;
+  pdf_storage_path: string | null;
+  billing_address: Record<string, any>;
+  line_items: InvoiceLineItem[];
+  notes: string | null;
+  metadata: Record<string, any>;
+  stripe_invoice_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InvoiceLineItem {
+  description: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+}
+
+export interface InvoiceInsert {
+  id?: string;
+  user_id: string;
+  subscription_id?: string | null;
+  transaction_id?: string | null;
+  invoice_number: string;
+  amount: number;
+  currency?: string;
+  tax_amount?: number;
+  discount_amount?: number;
+  total_amount: number;
+  invoice_date?: string;
+  due_date?: string | null;
+  paid_at?: string | null;
+  status?: Invoice['status'];
+  pdf_url?: string | null;
+  pdf_storage_path?: string | null;
+  billing_address?: Record<string, any>;
+  line_items?: InvoiceLineItem[];
+  notes?: string | null;
+  metadata?: Record<string, any>;
+  stripe_invoice_id?: string | null;
+}
+
+export interface InvoiceUpdate {
+  status?: Invoice['status'];
+  paid_at?: string | null;
+  pdf_url?: string | null;
+  pdf_storage_path?: string | null;
+  notes?: string | null;
+  metadata?: Record<string, any>;
+}
+
+export type InvoiceRow = Invoice;
+
+// Payment Methods
+export interface PaymentMethod {
+  id: string;
+  user_id: string;
+  type: 'card' | 'bank_account' | 'paypal' | 'other';
+  card_brand: string | null; // visa, mastercard, amex, etc.
+  card_last4: string | null;
+  card_exp_month: number | null;
+  card_exp_year: number | null;
+  bank_name: string | null;
+  bank_account_type: string | null; // checking, savings
+  bank_account_last4: string | null;
+  is_default: boolean;
+  is_active: boolean;
+  stripe_payment_method_id: string;
+  stripe_customer_id: string | null;
+  billing_address: Record<string, any>;
+  metadata: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaymentMethodInsert {
+  id?: string;
+  user_id: string;
+  type: 'card' | 'bank_account' | 'paypal' | 'other';
+  card_brand?: string | null;
+  card_last4?: string | null;
+  card_exp_month?: number | null;
+  card_exp_year?: number | null;
+  bank_name?: string | null;
+  bank_account_type?: string | null;
+  bank_account_last4?: string | null;
+  is_default?: boolean;
+  is_active?: boolean;
+  stripe_payment_method_id: string;
+  stripe_customer_id?: string | null;
+  billing_address?: Record<string, any>;
+  metadata?: Record<string, any>;
+}
+
+export interface PaymentMethodUpdate {
+  is_default?: boolean;
+  is_active?: boolean;
+  billing_address?: Record<string, any>;
+  metadata?: Record<string, any>;
+}
+
+export type PaymentMethodRow = PaymentMethod;
+
+// Plan Change Request
+export interface PlanChangeRequest {
+  new_plan_id: string;
+  billing_period: 'monthly' | 'yearly';
+  effective_date?: 'immediate' | 'end_of_period';
+  prorate?: boolean;
+}

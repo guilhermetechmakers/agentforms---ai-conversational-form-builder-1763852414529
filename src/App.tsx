@@ -28,6 +28,7 @@ import AdminDashboard from "@/pages/AdminDashboard"
 import Webhooks from "@/pages/Webhooks"
 import Settings from "@/pages/Settings"
 import { LLMOrchestration } from "@/pages/LLMOrchestration"
+import Billing from "@/pages/Billing"
 
 // React Query client with optimal defaults
 const queryClient = new QueryClient({
@@ -160,6 +161,14 @@ function App() {
             element={
               <DashboardLayout>
                 <Settings />
+              </DashboardLayout>
+            }
+          />
+          <Route
+            path="/dashboard/billing"
+            element={
+              <DashboardLayout>
+                <Billing />
               </DashboardLayout>
             }
           />

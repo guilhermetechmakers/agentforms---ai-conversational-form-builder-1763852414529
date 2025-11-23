@@ -1,0 +1,12 @@
+{
+  "migration_name": "20251123022839_create_billing_usage_and_payment_tables",
+  "created_at": "2025-11-23T02:28:39Z",
+  "description": "Create billing usage tracking, invoice management, and payment methods tables",
+  "tables_created": ["usage_records", "invoices", "payment_methods"],
+  "tables_modified": [],
+  "tables_deleted": [],
+  "breaking_changes": false,
+  "rollback_sql": "DROP FUNCTION IF EXISTS get_current_usage_summary(UUID); DROP FUNCTION IF EXISTS ensure_single_default_payment_method(); DROP TABLE IF EXISTS payment_methods CASCADE; DROP TABLE IF EXISTS invoices CASCADE; DROP TABLE IF EXISTS usage_records CASCADE;",
+  "estimated_rows": 0,
+  "requires_downtime": false
+}

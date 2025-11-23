@@ -7,6 +7,12 @@ import type {
   CheckoutResponse,
   CouponValidation,
   InvoicePreview,
+  UsageRecord,
+  UsageSummary,
+  Invoice,
+  PaymentMethod,
+  PaymentMethodInsert,
+  PlanChangeRequest,
 } from "@/types/billing"
 
 export const billingApi = {
@@ -76,5 +82,57 @@ export const billingApi = {
       amount,
       currency,
     })
+  },
+
+  // Usage Records
+  getUsageSummary: async (): Promise<UsageSummary | null> => {
+    return api.get<UsageSummary | null>("/billing/usage/summary")
+  },
+
+  getUsageRecords: async (limit: number = 12): Promise<UsageRecord[]> => {
+    return api.get<UsageRecord[]>(`/billing/usage/records?limit=${limit}`)
+  },
+
+  // Invoices
+  getInvoices: async (): Promise<Invoice[]> => {
+    return api.get<Invoice[]>("/billing/invoices")
+  },
+
+  getInvoiceById: async (id: string): Promise<Invoice> => {
+    return api.get<Invoice>(`/billing/invoices/${id}`)
+  },
+
+  downloadInvoice: async (id: string): Promise<{ download_url: string }> => {
+    return api.post<{ download_url: string }>(`/billing/invoices/${id}/download`, {})
+  },
+
+  // Payment Methods
+  getPaymentMethods: async (): Promise<PaymentMethod[]> => {
+    return api.get<PaymentMethod[]>("/billing/payment-methods")
+  },
+
+  addPaymentMethod: async (data: PaymentMethodInsert): Promise<PaymentMethod> => {
+    return api.post<PaymentMethod>("/billing/payment-methods", data)
+  },
+
+  updatePaymentMethod: async (id: string, data: Partial<PaymentMethod>): Promise<PaymentMethod> => {
+    return api.patch<PaymentMethod>(`/billing/payment-methods/${id}`, data)
+  },
+
+  deletePaymentMethod: async (id: string): Promise<void> => {
+    await api.delete(`/billing/payment-methods/${id}`)
+  },
+
+  setDefaultPaymentMethod: async (id: string): Promise<PaymentMethod> => {
+    return api.post<PaymentMethod>(`/billing/payment-methods/${id}/set-default`, {})
+  },
+
+  // Plan Changes
+  changePlan: async (request: PlanChangeRequest): Promise<Subscription> => {
+    return api.post<Subscription>("/billing/subscription/change-plan", request)
+  },
+
+  resumeSubscription: async (subscriptionId: string): Promise<Subscription> => {
+    return api.post<Subscription>(`/billing/subscription/${subscriptionId}/resume`, {})
   },
 }

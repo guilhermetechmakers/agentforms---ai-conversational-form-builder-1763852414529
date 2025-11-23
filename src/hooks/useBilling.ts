@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { billingApi } from "@/api/billing"
 import { toast } from "sonner"
-import type { CheckoutRequest } from "@/types/billing"
+import type { CheckoutRequest, PlanChangeRequest, PaymentMethodInsert } from "@/types/billing"
 
 export const billingKeys = {
   all: ["billing"] as const,
@@ -11,6 +11,13 @@ export const billingKeys = {
   subscription: () => [...billingKeys.all, "subscription"] as const,
   transactions: () => [...billingKeys.all, "transactions"] as const,
   transaction: (id: string) => [...billingKeys.transactions(), id] as const,
+  usage: () => [...billingKeys.all, "usage"] as const,
+  usageSummary: () => [...billingKeys.usage(), "summary"] as const,
+  usageRecords: () => [...billingKeys.usage(), "records"] as const,
+  invoices: () => [...billingKeys.all, "invoices"] as const,
+  invoice: (id: string) => [...billingKeys.invoices(), id] as const,
+  paymentMethods: () => [...billingKeys.all, "payment-methods"] as const,
+  paymentMethod: (id: string) => [...billingKeys.paymentMethods(), id] as const,
 }
 
 export const usePlans = () => {
@@ -111,6 +118,158 @@ export const useCancelSubscription = () => {
     },
     onError: (error: Error) => {
       toast.error(`Failed to cancel subscription: ${error.message}`)
+    },
+  })
+}
+
+// Usage Hooks
+export const useUsageSummary = () => {
+  return useQuery({
+    queryKey: billingKeys.usageSummary(),
+    queryFn: billingApi.getUsageSummary,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
+}
+
+export const useUsageRecords = (limit: number = 12) => {
+  return useQuery({
+    queryKey: [...billingKeys.usageRecords(), limit],
+    queryFn: () => billingApi.getUsageRecords(limit),
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+// Invoice Hooks
+export const useInvoices = () => {
+  return useQuery({
+    queryKey: billingKeys.invoices(),
+    queryFn: billingApi.getInvoices,
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+export const useInvoice = (id: string) => {
+  return useQuery({
+    queryKey: billingKeys.invoice(id),
+    queryFn: () => billingApi.getInvoiceById(id),
+    enabled: !!id,
+  })
+}
+
+export const useDownloadInvoice = () => {
+  return useMutation({
+    mutationFn: (id: string) => billingApi.downloadInvoice(id),
+    onSuccess: (data) => {
+      if (data.download_url) {
+        window.open(data.download_url, '_blank')
+        toast.success("Invoice download started")
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to download invoice: ${error.message}`)
+    },
+  })
+}
+
+// Payment Method Hooks
+export const usePaymentMethods = () => {
+  return useQuery({
+    queryKey: billingKeys.paymentMethods(),
+    queryFn: billingApi.getPaymentMethods,
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+export const useAddPaymentMethod = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: PaymentMethodInsert) => billingApi.addPaymentMethod(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: billingKeys.paymentMethods() })
+      toast.success("Payment method added successfully")
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to add payment method: ${error.message}`)
+    },
+  })
+}
+
+export const useUpdatePaymentMethod = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<PaymentMethodInsert> }) =>
+      billingApi.updatePaymentMethod(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: billingKeys.paymentMethods() })
+      toast.success("Payment method updated successfully")
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update payment method: ${error.message}`)
+    },
+  })
+}
+
+export const useDeletePaymentMethod = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => billingApi.deletePaymentMethod(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: billingKeys.paymentMethods() })
+      toast.success("Payment method removed successfully")
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to remove payment method: ${error.message}`)
+    },
+  })
+}
+
+export const useSetDefaultPaymentMethod = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => billingApi.setDefaultPaymentMethod(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: billingKeys.paymentMethods() })
+      queryClient.invalidateQueries({ queryKey: billingKeys.subscription() })
+      toast.success("Default payment method updated")
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to set default payment method: ${error.message}`)
+    },
+  })
+}
+
+// Plan Change Hooks
+export const useChangePlan = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (request: PlanChangeRequest) => billingApi.changePlan(request),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: billingKeys.subscription() })
+      queryClient.invalidateQueries({ queryKey: billingKeys.transactions() })
+      toast.success("Plan changed successfully")
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to change plan: ${error.message}`)
+    },
+  })
+}
+
+export const useResumeSubscription = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (subscriptionId: string) => billingApi.resumeSubscription(subscriptionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: billingKeys.subscription() })
+      toast.success("Subscription resumed successfully")
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to resume subscription: ${error.message}`)
     },
   })
 }
