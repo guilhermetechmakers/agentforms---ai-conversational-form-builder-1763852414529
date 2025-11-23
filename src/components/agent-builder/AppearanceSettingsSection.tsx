@@ -1,38 +1,121 @@
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { Upload, X, Image as ImageIcon } from "lucide-react"
+import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react"
+import { toast } from "sonner"
+import { storageApi } from "@/lib/storage"
 import type { VisualSettings } from "@/types/agent"
 
 interface AppearanceSettingsSectionProps {
   visuals: VisualSettings
   onUpdateVisuals: (updates: Partial<VisualSettings>) => void
+  agentId?: string
 }
 
 export function AppearanceSettingsSection({
   visuals,
   onUpdateVisuals,
+  agentId,
 }: AppearanceSettingsSectionProps) {
-  const handleImageUpload = (
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+
+  const handleImageUpload = async (
     type: 'avatar' | 'logo',
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0]
-    if (file) {
-      // In a real implementation, upload to Supabase Storage
-      // For now, create a local preview
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const url = reader.result as string
-        if (type === 'avatar') {
-          onUpdateVisuals({ avatar_url: url })
-        } else {
-          onUpdateVisuals({ logo_url: url })
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please upload an image file")
+      return
+    }
+
+    // Validate file size (5MB max for images)
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) {
+      toast.error("Image size exceeds 5MB limit")
+      return
+    }
+
+    if (type === 'avatar') {
+      setUploadingAvatar(true)
+    } else {
+      setUploadingLogo(true)
+    }
+
+    try {
+      if (!agentId) {
+        // For new agents, create a preview and upload after agent creation
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          const url = reader.result as string
+          if (type === 'avatar') {
+            onUpdateVisuals({ avatar_url: url })
+          } else {
+            onUpdateVisuals({ logo_url: url })
+          }
         }
+        reader.readAsDataURL(file)
+        toast.info("Image will be uploaded when you save the agent")
+        if (type === 'avatar') {
+          setUploadingAvatar(false)
+        } else {
+          setUploadingLogo(false)
+        }
+        return
       }
-      reader.readAsDataURL(file)
+
+      // Upload to Supabase Storage
+      const fileUrl = type === 'avatar'
+        ? await storageApi.uploadAgentAvatar(agentId, file)
+        : await storageApi.uploadAgentLogo(agentId, file)
+
+      if (type === 'avatar') {
+        onUpdateVisuals({ avatar_url: fileUrl })
+      } else {
+        onUpdateVisuals({ logo_url: fileUrl })
+      }
+
+      toast.success(`${type === 'avatar' ? 'Avatar' : 'Logo'} uploaded successfully!`)
+    } catch (error) {
+      console.error("Image upload error:", error)
+      toast.error(`Failed to upload ${type}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      if (type === 'avatar') {
+        setUploadingAvatar(false)
+      } else {
+        setUploadingLogo(false)
+      }
+    }
+  }
+
+  const handleRemoveImage = async (type: 'avatar' | 'logo') => {
+    const url = type === 'avatar' ? visuals.avatar_url : visuals.logo_url
+    if (url && agentId) {
+      try {
+        // Extract path from URL and delete from storage
+        const urlParts = url.split('/')
+        const pathIndex = urlParts.indexOf('agent-assets')
+        if (pathIndex !== -1) {
+          const path = urlParts.slice(pathIndex + 1).join('/')
+          await storageApi.deleteFile('agent-assets', path)
+        }
+      } catch (error) {
+        console.error("Image deletion error:", error)
+        // Continue with removal even if deletion fails
+      }
+    }
+
+    if (type === 'avatar') {
+      onUpdateVisuals({ avatar_url: undefined })
+    } else {
+      onUpdateVisuals({ logo_url: undefined })
     }
   }
 
@@ -77,7 +160,11 @@ export function AppearanceSettingsSection({
               <Avatar className="h-20 w-20 border-2 border-[#303136]">
                 <AvatarImage src={visuals.avatar_url} alt="Agent avatar" />
                 <AvatarFallback className="bg-[#F472B6] text-[#22242A] text-lg">
-                  <ImageIcon className="h-8 w-8" />
+                  {uploadingAvatar ? (
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  ) : (
+                    <ImageIcon className="h-8 w-8" />
+                  )}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 space-y-2">
@@ -87,12 +174,17 @@ export function AppearanceSettingsSection({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="border-[#303136] text-[#F3F4F6] hover:bg-[#24262C]"
+                      disabled={uploadingAvatar}
+                      className="border-[#303136] text-[#F3F4F6] hover:bg-[#24262C] disabled:opacity-50"
                       asChild
                     >
                       <span>
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Avatar
+                        {uploadingAvatar ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Upload className="h-4 w-4 mr-2" />
+                        )}
+                        {uploadingAvatar ? 'Uploading...' : 'Upload Avatar'}
                       </span>
                     </Button>
                     <input
@@ -101,14 +193,15 @@ export function AppearanceSettingsSection({
                       className="hidden"
                       accept="image/*"
                       onChange={(e) => handleImageUpload('avatar', e)}
+                      disabled={uploadingAvatar}
                     />
                   </Label>
-                  {visuals.avatar_url && (
+                  {visuals.avatar_url && !uploadingAvatar && (
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => onUpdateVisuals({ avatar_url: undefined })}
+                      onClick={() => handleRemoveImage('avatar')}
                       className="border-[#303136] text-[#F87171] hover:bg-[#24262C]"
                     >
                       <X className="h-4 w-4 mr-2" />
@@ -133,20 +226,28 @@ export function AppearanceSettingsSection({
                     alt="Logo"
                     className="h-16 object-contain"
                   />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onUpdateVisuals({ logo_url: undefined })}
-                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-[#282A30] border border-[#303136] text-[#F87171] hover:bg-[#24262C]"
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
+                  {!uploadingLogo && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveImage('logo')}
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-[#282A30] border border-[#303136] text-[#F87171] hover:bg-[#24262C]"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="border-2 border-dashed border-[#303136] rounded-lg p-4">
-                  <ImageIcon className="h-8 w-8 text-[#6B7280] mb-2" />
-                  <p className="text-xs text-[#A1A1AA] mb-2">No logo uploaded</p>
+                  {uploadingLogo ? (
+                    <Loader2 className="h-8 w-8 text-[#60A5FA] animate-spin mx-auto mb-2" />
+                  ) : (
+                    <>
+                      <ImageIcon className="h-8 w-8 text-[#6B7280] mb-2" />
+                      <p className="text-xs text-[#A1A1AA] mb-2">No logo uploaded</p>
+                    </>
+                  )}
                 </div>
               )}
               <div className="flex-1 space-y-2">
@@ -155,12 +256,17 @@ export function AppearanceSettingsSection({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="border-[#303136] text-[#F3F4F6] hover:bg-[#24262C]"
+                    disabled={uploadingLogo}
+                    className="border-[#303136] text-[#F3F4F6] hover:bg-[#24262C] disabled:opacity-50"
                     asChild
                   >
                     <span>
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload Logo
+                      {uploadingLogo ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4 mr-2" />
+                      )}
+                      {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
                     </span>
                   </Button>
                   <input
@@ -169,6 +275,7 @@ export function AppearanceSettingsSection({
                     className="hidden"
                     accept="image/*"
                     onChange={(e) => handleImageUpload('logo', e)}
+                    disabled={uploadingLogo}
                   />
                 </Label>
                 <p className="text-xs text-[#A1A1AA]">

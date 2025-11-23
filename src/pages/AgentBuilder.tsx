@@ -24,6 +24,7 @@ import { KnowledgeInputSection } from "@/components/agent-builder/KnowledgeInput
 import { AppearanceSettingsSection } from "@/components/agent-builder/AppearanceSettingsSection"
 import { PreviewPane } from "@/components/agent-builder/PreviewPane"
 import { AgentBuilderFooter } from "@/components/agent-builder/AgentBuilderFooter"
+import { VersionHistoryPanel } from "@/components/agent-builder/VersionHistoryPanel"
 import type { Agent, Field, Persona, KnowledgeBase, VisualSettings, AgentSchema } from "@/types/agent"
 
 // Autosave debounce delay (ms)
@@ -193,12 +194,15 @@ export default function AgentBuilder() {
     if (!id) return
 
     try {
-      await publishAgent.mutateAsync(id)
+      await publishAgent.mutateAsync({
+        id,
+        changeSummary: `Published version ${existingAgent?.version ? existingAgent.version + 1 : 1}`,
+      })
       toast.success("Agent published successfully!")
     } catch (error) {
       toast.error(`Failed to publish agent: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
-  }, [agentName, fields, hasUnsavedChanges, handleSave, id, publishAgent])
+  }, [agentName, fields, hasUnsavedChanges, handleSave, id, publishAgent, existingAgent])
 
   // Test handler
   const handleTest = useCallback(() => {
@@ -317,6 +321,12 @@ export default function AgentBuilder() {
           </div>
         </div>
         <div className="flex gap-2">
+          {!isNew && id && (
+            <VersionHistoryPanel
+              agentId={id}
+              currentVersion={existingAgent?.version || 1}
+            />
+          )}
           <Button
             variant="outline"
             onClick={() => handleSave()}
@@ -424,6 +434,7 @@ export default function AgentBuilder() {
                 <KnowledgeInputSection
                   knowledge={knowledge}
                   onUpdateKnowledge={(updates) => setKnowledge(prev => ({ ...prev, ...updates }))}
+                  agentId={id || undefined}
                 />
               </TabsContent>
 
@@ -431,6 +442,7 @@ export default function AgentBuilder() {
                 <AppearanceSettingsSection
                   visuals={visuals}
                   onUpdateVisuals={(updates) => setVisuals(prev => ({ ...prev, ...updates }))}
+                  agentId={id || undefined}
                 />
               </TabsContent>
             </Tabs>

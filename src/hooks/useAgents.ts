@@ -107,10 +107,12 @@ export const usePublishAgent = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: agentsApi.publish,
+    mutationFn: ({ id, changeSummary }: { id: string; changeSummary?: string }) =>
+      agentsApi.publish(id, changeSummary),
     onSuccess: (publishedAgent) => {
       queryClient.setQueryData(agentKeys.detail(publishedAgent.id), publishedAgent)
       queryClient.invalidateQueries({ queryKey: agentKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: ["agent-versions"] })
       toast.success("Agent published successfully!")
     },
     onError: (error: Error) => {

@@ -247,12 +247,23 @@ export const agentsApi = {
     return data
   },
 
-  publish: async (id: string): Promise<Agent> => {
+  publish: async (id: string, changeSummary?: string): Promise<Agent> => {
     const agent = await agentsApi.getById(id)
     
     // Generate public slug and URL
     const slug = agent.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
     const publicUrl = `${window.location.origin}/a/${slug}`
+    
+    // Create version snapshot before publishing
+    const { error: versionError } = await supabase.rpc('create_agent_version', {
+      p_agent_id: id,
+      p_change_summary: changeSummary || 'Published version',
+    })
+    
+    if (versionError) {
+      console.warn('Failed to create version snapshot:', versionError)
+      // Continue with publish even if version creation fails
+    }
     
     const { data, error } = await supabase
       .from("agents")

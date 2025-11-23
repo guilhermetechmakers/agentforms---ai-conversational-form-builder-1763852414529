@@ -4,34 +4,93 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { Upload, FileText, X } from "lucide-react"
+import { Upload, FileText, X, Loader2 } from "lucide-react"
+import { toast } from "sonner"
+import { storageApi } from "@/lib/storage"
 import type { KnowledgeBase } from "@/types/agent"
 
 interface KnowledgeInputSectionProps {
   knowledge: KnowledgeBase
   onUpdateKnowledge: (updates: Partial<KnowledgeBase>) => void
+  agentId?: string
 }
 
 export function KnowledgeInputSection({
   knowledge,
   onUpdateKnowledge,
+  agentId,
 }: KnowledgeInputSectionProps) {
   const [file, setFile] = useState<File | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
-    if (selectedFile) {
-      setFile(selectedFile)
-      // In a real implementation, you would upload the file to Supabase Storage
-      // For now, we'll just store the file name
+    if (!selectedFile) return
+
+    // Validate file size (10MB max)
+    const maxSize = 10 * 1024 * 1024
+    if (selectedFile.size > maxSize) {
+      toast.error("File size exceeds 10MB limit")
+      return
+    }
+
+    // Validate file type
+    const allowedTypes = ['.txt', '.md', '.pdf', '.doc', '.docx']
+    const fileExtension = selectedFile.name.toLowerCase().substring(selectedFile.name.lastIndexOf('.'))
+    if (!allowedTypes.includes(fileExtension)) {
+      toast.error("File type not supported. Please upload TXT, MD, PDF, DOC, or DOCX files.")
+      return
+    }
+
+    setFile(selectedFile)
+    setIsUploading(true)
+
+    try {
+      if (!agentId) {
+        // For new agents, store file temporarily and upload after agent creation
+        toast.info("File will be uploaded when you save the agent")
+        onUpdateKnowledge({
+          type: 'file',
+          file_url: selectedFile.name,
+        })
+        setIsUploading(false)
+        return
+      }
+
+      // Upload to Supabase Storage
+      const fileUrl = await storageApi.uploadKnowledgeFile(agentId, selectedFile)
+      
       onUpdateKnowledge({
         type: 'file',
-        file_url: selectedFile.name, // This would be the actual URL after upload
+        file_url: fileUrl,
       })
+      
+      toast.success("File uploaded successfully!")
+    } catch (error) {
+      console.error("File upload error:", error)
+      toast.error(`Failed to upload file: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setFile(null)
+    } finally {
+      setIsUploading(false)
     }
   }
 
-  const handleRemoveFile = () => {
+  const handleRemoveFile = async () => {
+    if (knowledge.file_url && agentId) {
+      try {
+        // Extract path from URL and delete from storage
+        const urlParts = knowledge.file_url.split('/')
+        const pathIndex = urlParts.indexOf('agent-assets')
+        if (pathIndex !== -1) {
+          const path = urlParts.slice(pathIndex + 1).join('/')
+          await storageApi.deleteFile('agent-assets', path)
+        }
+      } catch (error) {
+        console.error("File deletion error:", error)
+        // Continue with removal even if deletion fails
+      }
+    }
+    
     setFile(null)
     onUpdateKnowledge({
       type: 'text',
@@ -109,27 +168,41 @@ export function KnowledgeInputSection({
           ) : (
             <div className="space-y-2">
               <Label className="text-[#F3F4F6]">Upload File</Label>
-              {file ? (
+              {(file || knowledge.file_url) ? (
                 <div className="p-4 bg-[#24262C] rounded-lg border border-[#303136]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-[#60A5FA]" />
+                      {isUploading ? (
+                        <Loader2 className="h-5 w-5 text-[#60A5FA] animate-spin" />
+                      ) : (
+                        <FileText className="h-5 w-5 text-[#60A5FA]" />
+                      )}
                       <div>
-                        <p className="text-sm text-[#F3F4F6]">{file.name}</p>
-                        <p className="text-xs text-[#A1A1AA]">
-                          {(file.size / 1024).toFixed(2)} KB
+                        <p className="text-sm text-[#F3F4F6]">
+                          {file?.name || knowledge.file_url?.split('/').pop() || 'Uploaded file'}
                         </p>
+                        {file && (
+                          <p className="text-xs text-[#A1A1AA]">
+                            {(file.size / 1024).toFixed(2)} KB
+                            {isUploading && " • Uploading..."}
+                          </p>
+                        )}
+                        {knowledge.file_url && !file && (
+                          <p className="text-xs text-[#A1A1AA]">File uploaded</p>
+                        )}
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleRemoveFile}
-                      className="h-8 w-8 text-[#A1A1AA] hover:text-[#F87171]"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    {!isUploading && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleRemoveFile}
+                        className="h-8 w-8 text-[#A1A1AA] hover:text-[#F87171]"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ) : (
