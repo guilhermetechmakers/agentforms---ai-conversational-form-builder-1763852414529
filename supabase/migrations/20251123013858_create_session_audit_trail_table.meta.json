@@ -1,0 +1,12 @@
+{
+  "migration_name": "20251123013858_create_session_audit_trail_table",
+  "created_at": "2025-11-23T01:38:58Z",
+  "description": "Create session_audit_trail table to track all actions taken on sessions (export, redact, resend webhook, mark reviewed, etc.)",
+  "tables_created": ["session_audit_trail"],
+  "tables_modified": [],
+  "tables_deleted": [],
+  "breaking_changes": false,
+  "rollback_sql": "DROP TABLE IF EXISTS session_audit_trail CASCADE;",
+  "estimated_rows": 0,
+  "requires_downtime": false
+}

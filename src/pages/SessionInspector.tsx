@@ -1,135 +1,173 @@
-import { useParams } from "react-router-dom"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import * as React from "react"
+import { useParams, Link } from "react-router-dom"
+import { useSession, useExportSessions, useRedactPII } from "@/hooks/useSessions"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
-import { Download, Send, CheckCircle2 } from "lucide-react"
+import { ChevronRight, Home } from "lucide-react"
+import { ConversationTimeline } from "@/components/sessions/ConversationTimeline"
+import { CollectedDataPanel } from "@/components/sessions/CollectedDataPanel"
+import { MetadataSection } from "@/components/sessions/MetadataSection"
+import { ActionsSidebar } from "@/components/sessions/ActionsSidebar"
+import { AuditTrail } from "@/components/sessions/AuditTrail"
+import { ExportOptionsModal } from "@/components/sessions/ExportOptionsModal"
+import { ConfirmRedactionDialog } from "@/components/sessions/ConfirmRedactionDialog"
 
 export default function SessionInspector() {
-  const { id } = useParams()
+  const { id } = useParams<{ id: string }>()
+  const [exportModalOpen, setExportModalOpen] = React.useState(false)
+  const [redactionDialogOpen, setRedactionDialogOpen] = React.useState(false)
+  const [selectedFieldIds, setSelectedFieldIds] = React.useState<string[]>([])
 
-  // Mock data
-  const session = {
-    id: id || "1",
-    agentName: "Customer Support Bot",
-    status: "completed",
-    startedAt: "2024-01-15T10:30:00Z",
-    completedAt: "2024-01-15T10:35:00Z",
-    messages: [
-      { id: "1", role: "agent", content: "Hello! How can I help you today?", timestamp: "2024-01-15T10:30:00Z" },
-      { id: "2", role: "visitor", content: "I need help with my order", timestamp: "2024-01-15T10:30:15Z" },
-      { id: "3", role: "agent", content: "I'd be happy to help! Can you provide your order number?", timestamp: "2024-01-15T10:30:20Z" },
-    ],
-    fieldValues: [
-      { fieldKey: "name", value: "John Doe" },
-      { fieldKey: "email", value: "john@example.com" },
-      { fieldKey: "issue", value: "Order not received" },
-    ],
+  const { data: session, isLoading, error } = useSession(id || "")
+  const exportSessions = useExportSessions()
+  const redactPII = useRedactPII()
+
+  const handleExport = async (format: "csv" | "json") => {
+    if (!id) return
+    try {
+      await exportSessions.mutateAsync({ ids: [id], format })
+    } catch (error) {
+      // Error handled by hook
+    }
+  }
+
+  const handleRedact = () => {
+    setRedactionDialogOpen(true)
+  }
+
+  const handleConfirmRedaction = async () => {
+    if (!id) return
+    try {
+      await redactPII.mutateAsync({
+        sessionId: id,
+        fieldIds: selectedFieldIds.length > 0 ? selectedFieldIds : undefined,
+      })
+      setRedactionDialogOpen(false)
+      setSelectedFieldIds([])
+    } catch (error) {
+      // Error handled by hook
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 animate-fade-in-up">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-64 bg-[#24262C]" />
+            <Skeleton className="h-5 w-96 bg-[#24262C]" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Skeleton className="h-96 w-full bg-[#24262C]" />
+            <Skeleton className="h-64 w-full bg-[#24262C]" />
+          </div>
+          <div className="space-y-6">
+            <Skeleton className="h-64 w-full bg-[#24262C]" />
+            <Skeleton className="h-48 w-full bg-[#24262C]" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !session) {
+    return (
+      <div className="space-y-6 animate-fade-in-up">
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold text-[#F3F4F6] mb-2">Session Not Found</h2>
+          <p className="text-[#A1A1AA] mb-6">
+            {error ? "Failed to load session" : "The session you're looking for doesn't exist."}
+          </p>
+          <Button asChild variant="outline" className="border-[#303136] text-[#F3F4F6] hover:bg-[#282A30]">
+            <Link to="/dashboard/sessions">Back to Sessions</Link>
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6 animate-fade-in-up">
+      {/* Breadcrumbs */}
+      <nav className="flex items-center gap-2 text-sm text-[#A1A1AA]">
+        <Link
+          to="/dashboard"
+          className="hover:text-[#F3F4F6] transition-colors flex items-center gap-1"
+        >
+          <Home className="h-4 w-4" />
+          Dashboard
+        </Link>
+        <ChevronRight className="h-4 w-4" />
+        <Link
+          to="/dashboard/sessions"
+          className="hover:text-[#F3F4F6] transition-colors"
+        >
+          Sessions
+        </Link>
+        <ChevronRight className="h-4 w-4" />
+        <span className="text-[#F3F4F6] font-medium">Session Details</span>
+      </nav>
+
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-[#F3F4F6]">Session Details</h1>
-          <p className="text-[#A1A1AA] mt-1">Session ID: {session.id}</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Send className="mr-2 h-4 w-4" />
-            Resend Webhook
-          </Button>
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
+          <h1 className="text-3xl font-bold text-[#F3F4F6] mb-2">
+            {session.agent?.name || "Session"} Details
+          </h1>
+          <p className="text-[#A1A1AA] font-mono text-sm">Session ID: {session.id}</p>
         </div>
       </div>
 
-      {/* Session Info */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Session Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[#A1A1AA]">Agent:</span>
-            <span className="text-[#F3F4F6] font-medium">{session.agentName}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[#A1A1AA]">Status:</span>
-            <span className="px-2 py-1 rounded-full text-xs font-medium bg-[#4ADE80]/20 text-[#4ADE80]">
-              {session.status}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[#A1A1AA]">Started:</span>
-            <span className="text-[#F3F4F6]">{new Date(session.startedAt).toLocaleString()}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[#A1A1AA]">Completed:</span>
-            <span className="text-[#F3F4F6]">
-              {session.completedAt ? new Date(session.completedAt).toLocaleString() : "N/A"}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Left Sidebar - Actions */}
+        <div className="lg:col-span-1">
+          <ActionsSidebar
+            sessionId={session.id}
+            onExport={() => setExportModalOpen(true)}
+            onRedact={handleRedact}
+          />
+        </div>
 
-      {/* Collected Data */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Collected Data</CardTitle>
-          <CardDescription>Structured data extracted from the conversation</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {session.fieldValues.map((field) => (
-              <div
-                key={field.fieldKey}
-                className="flex items-center justify-between p-3 rounded-lg bg-[#24262C] border border-[#303136]"
-              >
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-[#F3F4F6] capitalize">{field.fieldKey}</div>
-                  <div className="text-sm text-[#A1A1AA] mt-1">{field.value}</div>
-                </div>
-                <CheckCircle2 className="h-5 w-5 text-[#4ADE80]" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+        {/* Main Content Area */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Conversation Timeline */}
+          <ConversationTimeline
+            messages={session.messages}
+            agentName={session.agent?.name}
+          />
 
-      {/* Conversation Timeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Conversation Timeline</CardTitle>
-          <CardDescription>Full conversation history</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {session.messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-3 ${
-                  message.role === "visitor" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-xl p-4 ${
-                    message.role === "agent"
-                      ? "bg-[#24262C] border border-[#303136] text-[#F3F4F6]"
-                      : "bg-[#F6D365] text-[#22242A]"
-                  }`}
-                >
-                  <p className="text-sm">{message.content}</p>
-                  <p className="text-xs mt-2 opacity-70">
-                    {new Date(message.timestamp).toLocaleTimeString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+          {/* Collected Data Panel */}
+          <CollectedDataPanel
+            fieldValues={session.field_values}
+            sessionId={session.id}
+          />
+
+          {/* Metadata Section */}
+          <MetadataSection session={session} agentName={session.agent?.name} />
+
+          {/* Audit Trail */}
+          <AuditTrail sessionId={session.id} />
+        </div>
+      </div>
+
+      {/* Modals */}
+      <ExportOptionsModal
+        open={exportModalOpen}
+        onOpenChange={setExportModalOpen}
+        onExport={handleExport}
+        isLoading={exportSessions.isPending}
+      />
+
+      <ConfirmRedactionDialog
+        open={redactionDialogOpen}
+        onOpenChange={setRedactionDialogOpen}
+        onConfirm={handleConfirmRedaction}
+        fieldCount={selectedFieldIds.length > 0 ? selectedFieldIds.length : undefined}
+        isLoading={redactPII.isPending}
+      />
     </div>
   )
 }

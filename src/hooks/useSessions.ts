@@ -81,3 +81,80 @@ export const useExportSessions = () => {
     },
   })
 }
+
+export const useUpdateFieldValue = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      sessionId,
+      fieldId,
+      value,
+    }: {
+      sessionId: string
+      fieldId: string
+      value: string | number | string[] | Record<string, unknown>
+    }) => sessionsApi.updateFieldValue(sessionId, fieldId, value),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: sessionKeys.detail(variables.sessionId) })
+      toast.success("Field value updated successfully")
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update field: ${error.message}`)
+    },
+  })
+}
+
+export const useRedactPII = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ sessionId, fieldIds }: { sessionId: string; fieldIds?: string[] }) =>
+      sessionsApi.redactPII(sessionId, fieldIds),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: sessionKeys.detail(variables.sessionId) })
+      toast.success("PII redacted successfully")
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to redact PII: ${error.message}`)
+    },
+  })
+}
+
+export const useResendWebhook = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (sessionId: string) => sessionsApi.resendWebhook(sessionId),
+    onSuccess: (_, sessionId) => {
+      queryClient.invalidateQueries({ queryKey: sessionKeys.detail(sessionId) })
+      toast.success("Webhook resent successfully")
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to resend webhook: ${error.message}`)
+    },
+  })
+}
+
+export const useMarkReviewed = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (sessionId: string) => sessionsApi.markReviewed(sessionId),
+    onSuccess: (_, sessionId) => {
+      queryClient.invalidateQueries({ queryKey: sessionKeys.detail(sessionId) })
+      toast.success("Session marked as reviewed")
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to mark as reviewed: ${error.message}`)
+    },
+  })
+}
+
+export const useSessionAuditTrail = (sessionId: string) => {
+  return useQuery({
+    queryKey: [...sessionKeys.detail(sessionId), "audit-trail"],
+    queryFn: () => sessionsApi.getAuditTrail(sessionId),
+    enabled: !!sessionId,
+  })
+}

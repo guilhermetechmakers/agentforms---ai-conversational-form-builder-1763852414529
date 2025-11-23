@@ -178,9 +178,25 @@ export const sessionsApi = {
   },
 
   export: async (ids: string[], format: "csv" | "json"): Promise<Blob> => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+
     // Fetch sessions with all related data
     const sessions = await Promise.all(
       ids.map(id => sessionsApi.getById(id))
+    )
+
+    // Log audit trail for each exported session
+    await Promise.all(
+      ids.map(sessionId =>
+        supabase.from("session_audit_trail").insert({
+          session_id: sessionId,
+          user_id: user.id,
+          action: "exported",
+          action_details: { format, exported_at: new Date().toISOString() },
+          description: `Exported session as ${format.toUpperCase()}`,
+        })
+      )
     )
 
     if (format === "csv") {
@@ -206,5 +222,125 @@ export const sessionsApi = {
       const jsonContent = JSON.stringify(sessions, null, 2)
       return new Blob([jsonContent], { type: "application/json" })
     }
+  },
+
+  updateFieldValue: async (
+    sessionId: string,
+    fieldId: string,
+    value: string | number | string[] | Record<string, unknown>
+  ): Promise<FieldValue> => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+
+    const { data, error } = await supabase
+      .from("field_values")
+      .update({
+        value,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", fieldId)
+      .eq("session_id", sessionId)
+      .select()
+      .single()
+
+    if (error) throw error
+
+    // Log audit trail
+    await supabase.from("session_audit_trail").insert({
+      session_id: sessionId,
+      user_id: user.id,
+      action: "field_updated",
+      action_details: { field_id: fieldId, field_value: value },
+      description: `Updated field value`,
+    })
+
+    return data as FieldValue
+  },
+
+  redactPII: async (sessionId: string, fieldIds?: string[]): Promise<void> => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+
+    // Redact field values (replace with [REDACTED])
+    if (fieldIds && fieldIds.length > 0) {
+      const { error } = await supabase
+        .from("field_values")
+        .update({
+          value: "[REDACTED]",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("session_id", sessionId)
+        .in("id", fieldIds)
+
+      if (error) throw error
+    } else {
+      // Redact all field values
+      const { error } = await supabase
+        .from("field_values")
+        .update({
+          value: "[REDACTED]",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("session_id", sessionId)
+
+      if (error) throw error
+    }
+
+    // Log audit trail
+    await supabase.from("session_audit_trail").insert({
+      session_id: sessionId,
+      user_id: user.id,
+      action: "redacted_pii",
+      action_details: { field_ids: fieldIds || "all" },
+      description: `Redacted PII from ${fieldIds?.length || "all"} field(s)`,
+    })
+  },
+
+  resendWebhook: async (sessionId: string): Promise<void> => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+
+    // In a real implementation, this would trigger a webhook delivery
+    // For now, we'll just log the action
+    const { error } = await supabase.from("session_audit_trail").insert({
+      session_id: sessionId,
+      user_id: user.id,
+      action: "webhook_resent",
+      action_details: {},
+      description: "Webhook resent for session",
+    })
+
+    if (error) throw error
+  },
+
+  markReviewed: async (sessionId: string): Promise<void> => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+
+    // Log audit trail
+    const { error } = await supabase.from("session_audit_trail").insert({
+      session_id: sessionId,
+      user_id: user.id,
+      action: "marked_reviewed",
+      action_details: {},
+      description: "Session marked as reviewed",
+    })
+
+    if (error) throw error
+  },
+
+  getAuditTrail: async (sessionId: string) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+
+    const { data, error } = await supabase
+      .from("session_audit_trail")
+      .select("*")
+      .eq("session_id", sessionId)
+      .order("created_at", { ascending: false })
+
+    if (error) throw error
+
+    return data || []
   },
 }

@@ -96,3 +96,13 @@ export interface SendMessageResponse {
   session: Session;
   field_value?: FieldValue;
 }
+
+export interface SessionAuditTrail {
+  id: string;
+  session_id: string;
+  user_id: string | null;
+  action: 'exported' | 'redacted_pii' | 'webhook_resent' | 'marked_reviewed' | 'field_updated' | 'session_deleted' | 'viewed';
+  action_details: Record<string, unknown>;
+  description: string | null;
+  created_at: string;
+}
